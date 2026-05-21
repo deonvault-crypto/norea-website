@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NORÉA — Premium Activewear</title>
+  <meta name="description" content="NORÉA is a premium activewear brand for women who move beautifully and live confidently." />
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="announcement">New NORÉA visuals added • Website starter ready for online store launch</div>
+  <header class="header">
+    <button class="menu-btn" id="mobileMenu" aria-label="Open menu">Menu</button>
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#shop">Shop</a>
+      <a href="#lookbook">Lookbook</a>
+      <a href="#story">Story</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="brand" href="#">NORÉA</a>
+    <div class="header-actions">
+      <button class="cart-btn" id="cartButton"><span>Cart</span><span class="cart-count">0</span></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow">Premium activewear</p>
+        <h1>Move beautifully. Live confidently.</h1>
+        <p class="lead">A clean, modern ecommerce website for NORÉA, built around the campaign images we created: real-looking African models, luxury activewear styling, visible branding and a soft premium feel.</p>
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+          <a href="#shop" class="btn dark">Shop the collection</a>
+          <a href="#lookbook" class="btn light">View lookbook</a>
+        </div>
+      </div>
+      <div class="hero-media">
+        <img src="assets/images/01-confident-stride-in-serene-surroundings.webp" alt="NORÉA activewear model" />
+        <div class="hero-tag">Sculpted fit • Cloud soft • Everyday confidence</div>
+      </div>
+    </section>
+
+    <section class="section" id="shop">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">New drop</p>
+          <h2>Shop NORÉA</h2>
+        </div>
+        <p>Product cards, filters, quick views and a cart are already working. The checkout button is set to WhatsApp for now, so you can start receiving orders fast.</p>
+      </div>
+      <div class="filters" id="filters"></div>
+      <div class="product-grid" id="productGrid"></div>
+    </section>
+
+    <section class="section story" id="story">
+      <div class="story-card reveal">
+        <img src="assets/images/02-move-beautifully-live-confidently.webp" alt="NORÉA cover page" loading="lazy" />
+      </div>
+      <div class="story-copy reveal">
+        <p class="eyebrow">Designed for confidence</p>
+        <h2>Luxury movement, made for everyday life.</h2>
+        <p class="lead">The website is styled to feel premium, not like a cheap dropshipping store. It uses clean space, strong product photography and simple buying steps for clients across Africa.</p>
+        <div class="feature-list">
+          <div class="feature"><strong>Visible branding</strong><span>NORÉA appears on tops, bottoms and campaign layouts.</span></div>
+          <div class="feature"><strong>Real campaign feel</strong><span>Models, product shots and detail boards are mixed like a proper fashion site.</span></div>
+          <div class="feature"><strong>Mobile first</strong><span>Built to look good on phones because most customers will browse there.</span></div>
+          <div class="feature"><strong>Ready to expand</strong><span>Payments, delivery zones, admin and accounts can be added next.</span></div>
+        </div>
+        <a class="btn dark" href="#lookbook">Explore visuals</a>
+      </div>
+    </section>
+
+    <section class="section lookbook" id="lookbook">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Campaign gallery</p>
+          <h2>Lookbook images</h2>
+        </div>
+        <p>These are website-ready images from your NORÉA campaign. Add more product photos later and they can drop straight into this layout.</p>
+      </div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Why customers choose it</p>
+          <h2>Built to sell the feeling</h2>
+        </div>
+      </div>
+      <div class="values">
+        <article class="value-card reveal"><span class="value-number">01</span><h3>Premium first impression</h3><p class="muted">Large visuals, soft neutrals, editorial typography and a strong NORÉA logo.</p></article>
+        <article class="value-card reveal"><span class="value-number">02</span><h3>Clear product browsing</h3><p class="muted">Filters by category, fast product cards, quick view and cart flow.</p></article>
+        <article class="value-card reveal"><span class="value-number">03</span><h3>Easy ordering</h3><p class="muted">WhatsApp checkout is included as a practical first step before adding card payments.</p></article>
+      </div>
+    </section>
+
+    <section class="cta" id="contact">
+      <div class="cta-copy">
+        <p class="eyebrow">Join the launch list</p>
+        <h2>Be first to know when NORÉA drops.</h2>
+        <p class="lead">Collect emails now, then connect this to Mailchimp, Klaviyo, Supabase or your own backend later.</p>
+        <form class="newsletter" onsubmit="event.preventDefault(); alert('Thank you for joining NORÉA.');">
+          <input type="email" placeholder="Email address" required />
+          <button class="btn dark" type="submit">Join</button>
+        </form>
+      </div>
+      <div class="cta-image">
+        <img src="assets/images/15-a-clean-studio-fashion-catalog-composite-image-o.webp" alt="NORÉA catalog visuals" loading="lazy" />
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p class="muted">© 2026 NORÉA. Premium activewear.</p>
+    <a class="brand" href="#">NORÉA</a>
+    <div class="footer-links"><a href="#shop">Shop</a><a href="#lookbook">Lookbook</a><a href="#contact">Contact</a></div>
+  </footer>
+
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" aria-label="Shopping cart">
+    <div class="cart-head"><h3>Your cart</h3><button class="cart-close" id="cartClose" aria-label="Close cart">×</button></div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-foot"><div><span>Total</span><strong id="cartTotal">US$0.00</strong></div><button class="btn dark full" id="checkoutBtn">Checkout on WhatsApp</button></div>
+  </aside>
+
+  <div class="modal"><div class="modal-card" id="modalContent"></div></div>
+  <script src="app.js"></script>
+</body>
+</html>
