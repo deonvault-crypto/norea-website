@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Noréa Admin</title>
+  <style>
+    :root{--navy:#0B1D3A;--rose:#E85D8F;--blush:#FCE6EF;--gray:#F6F6F6;--line:#E6E0E5;--ink:#111827}
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:#fff;color:var(--ink)}
+    header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0}
+    h1{letter-spacing:.3em;font-weight:400;color:var(--navy);margin:0}main{padding:24px;display:grid;gap:18px}
+    .login,.panel{border:1px solid var(--line);border-radius:8px;padding:18px;background:#fff}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .metric{background:var(--blush);border-radius:8px;padding:16px}.metric strong{font-size:28px;color:var(--navy);display:block}
+    input,select,button,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:11px}button{background:var(--navy);color:#fff;font-weight:800;cursor:pointer}
+    table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px;vertical-align:top}th{color:var(--navy)}
+    nav{display:flex;gap:8px;flex-wrap:wrap}.tab{background:var(--gray);color:var(--navy);border:0}.tab.active{background:var(--navy);color:#fff}
+    .muted{color:#6B7280}.row{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none}@media(max-width:760px){.grid{grid-template-columns:1fr}header{display:grid;gap:12px}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>NORÉA</h1>
+    <nav id="tabs"></nav>
+  </header>
+  <main>
+    <section class="login" id="login">
+      <h2>Secure admin sign in</h2>
+      <p class="muted">Use an admin account created through the mobile API environment.</p>
+      <div class="row">
+        <input id="email" type="email" placeholder="Admin email" />
+        <input id="password" type="password" placeholder="Password" />
+        <button onclick="login()">Sign in</button>
+      </div>
+    </section>
+    <section class="panel hidden" id="dashboard">
+      <div class="grid" id="metrics"></div>
+    </section>
+    <section class="panel hidden" id="content"></section>
+  </main>
+  <script>
+    const api = '/api';
+    const sections = ['Products','Inventory','Orders','Payments','Customers','Reviews','Discounts','Shipping','Analytics'];
+    let token = localStorage.getItem('norea.admin.token');
+    let active = 'Products';
+    document.getElementById('tabs').innerHTML = sections.map(s => `<button class="tab" onclick="show('${s}')">${s}</button>`).join('');
+    async function call(path, options = {}) {
+      const res = await fetch(api + path, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(options.headers || {}) } });
+      if (!res.ok) throw new Error((await res.json()).message || 'Request failed');
+      return (await res.json()).data;
+    }
+    async function login() {
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const body = JSON.stringify({ email: emailInput.value, password: passwordInput.value });
+      const data = await call('/auth/login', { method: 'POST', body, headers: {} }).catch(err => alert(err.message));
+      if (!data) return;
+      token = data.token;
+      localStorage.setItem('norea.admin.token', token);
+      boot();
+    }
+    async function boot() {
+      if (!token) return;
+      document.getElementById('login').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      document.getElementById('content').classList.remove('hidden');
+      const analytics = await call('/admin/analytics');
+      metrics.innerHTML = Object.entries(analytics).map(([k,v]) => `<div class="metric"><span>${k}</span><strong>${v}</strong></div>`).join('');
+      show(active);
+    }
+    async function show(section) {
+      active = section;
+      [...document.querySelectorAll('.tab')].forEach(btn => btn.classList.toggle('active', btn.textContent === section));
+      if (!token) return;
+      if (section === 'Products' || section === 'Inventory') {
+        const products = await call('/admin/products');
+        content.innerHTML = `<h2>${section}</h2><table><tr><th>Product</th><th>Category</th><th>Price</th><th>Inventory</th></tr>${products.map(p => `<tr><td>${p.title}</td><td>${p.category}</td><td>USD ${p.priceUsd}</td><td>${p.inventory}</td></tr>`).join('')}</table>`;
+      } else if (section === 'Orders' || section === 'Payments' || section === 'Shipping') {
+        const orders = await call('/admin/orders');
+        content.innerHTML = `<h2>${section}</h2><table><tr><th>Order</th><th>Status</th><th>Total</th><th>Payment</th></tr>${orders.map(o => `<tr><td>${o.id}</td><td>${o.status}</td><td>USD ${o.totalUsd}</td><td>${o.paymentMethod}</td></tr>`).join('')}</table>`;
+      } else if (section === 'Customers') {
+        const customers = await call('/admin/customers');
+        content.innerHTML = `<h2>Customers</h2><table><tr><th>Name</th><th>Email</th><th>Phone</th></tr>${customers.map(c => `<tr><td>${c.name}</td><td>${c.email}</td><td>${c.phone}</td></tr>`).join('')}</table>`;
+      } else if (section === 'Reviews') {
+        const reviews = await call('/admin/reviews');
+        content.innerHTML = `<h2>Reviews</h2><table><tr><th>Product</th><th>Rating</th><th>Review</th></tr>${reviews.map(r => `<tr><td>${r.productId}</td><td>${r.rating}</td><td>${r.body}</td></tr>`).join('')}</table>`;
+      } else if (section === 'Discounts') {
+        content.innerHTML = `<h2>Discounts</h2><p class="muted">Create and audit discount codes through the /api/admin/discounts endpoint before publishing campaigns.</p>`;
+      } else {
+        const analytics = await call('/admin/analytics');
+        content.innerHTML = `<h2>Analytics</h2><pre>${JSON.stringify(analytics, null, 2)}</pre>`;
+      }
+    }
+    boot();
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+name: Noréa Mobile App
+
+on:
+  pull_request:
+    paths:
+      - "mobile/**"
+      - "mobile-api/**"
+      - "deploy/render/mobile-api.yaml"
+      - ".github/workflows/mobile-app.yml"
+  push:
+    branches:
+      - "codex/**"
+    paths:
+      - "mobile/**"
+      - "mobile-api/**"
+      - "deploy/render/mobile-api.yaml"
+      - ".github/workflows/mobile-app.yml"
+
+jobs:
+  mobile-api:
+    name: Mobile API syntax and install
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run check
+
+  mobile-app:
+    name: Expo app typecheck
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run typecheck

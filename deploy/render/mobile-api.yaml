@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: norea-mobile-api
+    runtime: node
+    rootDir: mobile-api
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUBLIC_BASE_URL
+        value: https://norea-mobile-api.onrender.com
+      - key: CORS_ORIGINS
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: norea_mobile
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: WHATSAPP_SUPPORT_NUMBER
+        value: "263776678288"
+      - key: BANK_TRANSFER_DETAILS
+        sync: false
+      - key: ZIPIT_DETAILS
+        sync: false
+      - key: ECOCASH_MERCHANT_CODE
+        sync: false
+      - key: ONEMONEY_MERCHANT_CODE
+        sync: false
+      - key: PAYNOW_INTEGRATION_ID
+        sync: false
+      - key: PAYNOW_INTEGRATION_KEY
+        sync: false
+      - key: PAYNOW_RESULT_URL
+        value: https://norea-mobile-api.onrender.com/api/payments/paynow/result
+      - key: PAYNOW_RETURN_URL
+        value: https://norea-mobile-api.onrender.com/api/payments/paynow/return
