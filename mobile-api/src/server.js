@@ -17,6 +17,23 @@ const app = express();
 const port = Number(process.env.PORT || 4000);
 const isProduction = process.env.NODE_ENV === "production";
 const requiredProductionEnv = ["JWT_SECRET", "MONGODB_URI"];
+const readinessEnvVars = [
+  "NODE_ENV",
+  "PUBLIC_BASE_URL",
+  "CORS_ORIGINS",
+  "JWT_SECRET",
+  "MONGODB_URI",
+  "MONGODB_DB",
+  "MOBILE_ORDER_SOURCE",
+  "MONGO_PRODUCTS_COLLECTION",
+  "MONGO_INVENTORY_COLLECTION",
+  "MONGO_CUSTOMERS_COLLECTION",
+  "MONGO_ORDERS_COLLECTION",
+  "PAYNOW_INTEGRATION_ID",
+  "PAYNOW_INTEGRATION_KEY",
+  "PAYNOW_RESULT_URL",
+  "PAYNOW_RETURN_URL"
+];
 
 for (const key of requiredProductionEnv) {
   if (isProduction && !process.env[key]) {
@@ -605,6 +622,50 @@ app.get("/api/ready", asyncRoute(async (req, res) => {
     status: checks.database && checks.jwt ? "ready" : "not_ready",
     checks
   }, checks.database && checks.jwt ? 200 : 503);
+}));
+
+app.get("/api/readiness", asyncRoute(async (req, res) => {
+  const mongoStatus = {
+    configured: Boolean(process.env.MONGODB_URI),
+    connected: false,
+    database: process.env.MONGODB_DB || "norea",
+    collections
+  };
+
+  if (database) {
+    try {
+      await database.command({ ping: 1 });
+      mongoStatus.connected = true;
+    } catch (error) {
+      mongoStatus.error = "MongoDB ping failed";
+    }
+  }
+
+  const environment = readinessEnvVars.map((name) => ({
+    name,
+    present: Boolean(process.env[name]),
+    required: requiredProductionEnv.includes(name)
+  }));
+  const missingRequired = environment
+    .filter((item) => item.required && !item.present)
+    .map((item) => item.name);
+  const ready = mongoStatus.connected && missingRequired.length === 0;
+
+  ok(req, res, {
+    status: ready ? "ready" : "not_ready",
+    server: {
+      service: "norea-mobile-api",
+      running: true,
+      environment: process.env.NODE_ENV || "development",
+      uptimeSeconds: Math.round(process.uptime()),
+      timestamp: now()
+    },
+    mongodb: mongoStatus,
+    environment: {
+      variables: environment,
+      missingRequired
+    }
+  }, ready ? 200 : 503);
 }));
 
 app.get("/api/monitoring/readiness", asyncRoute(async (req, res) => {

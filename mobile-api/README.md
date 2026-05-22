@@ -60,8 +60,51 @@ The API intentionally rejects unconfigured card/Paynow payment attempts in produ
 
 - `GET /api/health` for basic liveness
 - `GET /api/ready` for database/JWT/payment readiness
+- `GET /api/readiness` for Render-ready JSON covering server status, MongoDB connection, configured collection names and required environment-variable presence without exposing secret values
 - `GET /api/monitoring/readiness` for uptime and request/payment counters
 - `GET /api/metrics` for admin-only runtime metrics
+
+### `GET /api/readiness`
+
+Use this endpoint for Render health/readiness checks when the mobile API must prove it can reach MongoDB and has the required production environment variables. The response never returns secret values, only `present` booleans.
+
+Example response:
+
+```json
+{
+  "data": {
+    "status": "ready",
+    "server": {
+      "service": "norea-mobile-api",
+      "running": true,
+      "environment": "production",
+      "uptimeSeconds": 42,
+      "timestamp": "2026-05-22T16:30:00.000Z"
+    },
+    "mongodb": {
+      "configured": true,
+      "connected": true,
+      "database": "norea",
+      "collections": {
+        "products": "products",
+        "inventory": "inventory",
+        "customers": "customers",
+        "orders": "orders"
+      }
+    },
+    "environment": {
+      "variables": [
+        { "name": "JWT_SECRET", "present": true, "required": true },
+        { "name": "MONGODB_URI", "present": true, "required": true }
+      ],
+      "missingRequired": []
+    }
+  },
+  "requestId": "..."
+}
+```
+
+Returns HTTP `200` when ready and HTTP `503` when MongoDB is not connected or required environment variables are missing.
 
 ## Payment Safety
 
