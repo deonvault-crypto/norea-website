@@ -59,7 +59,8 @@ const collections = {
   payments: process.env.MONGO_PAYMENTS_COLLECTION || "payments",
   refunds: process.env.MONGO_REFUNDS_COLLECTION || "refunds",
   pushTokens: process.env.MONGO_PUSH_TOKENS_COLLECTION || "pushTokens",
-  discounts: process.env.MONGO_DISCOUNTS_COLLECTION || "discounts"
+  discounts: process.env.MONGO_DISCOUNTS_COLLECTION || "discounts",
+  deletionRequests: process.env.MONGO_DELETION_REQUESTS_COLLECTION || "deletionRequests"
 };
 
 const fields = {
@@ -109,7 +110,8 @@ const memory = {
   payments: [],
   refunds: [],
   pushTokens: [],
-  discounts: []
+  discounts: [],
+  deletionRequests: []
 };
 
 const metrics = {
@@ -232,6 +234,8 @@ function normalizeProduct(product, inventoryDoc) {
     title: String(getPath(product, fields.product.title) || product.name || "Noréa Product"),
     category: String(getPath(product, fields.product.category) || "Activewear"),
     priceUsd: asNumber(getPath(product, fields.product.price) ?? product.price ?? product.usdPrice, 0),
+    compareAtPriceUsd: asNumber(product.compareAtPriceUsd, 0) || undefined,
+    salePriceUsd: asNumber(product.salePriceUsd, 0) || undefined,
     sizes: asArray(getPath(product, fields.product.sizes)).length
       ? asArray(getPath(product, fields.product.sizes))
       : ["XS", "S", "M", "L", "XL", "XXL"],
@@ -246,12 +250,22 @@ function normalizeProduct(product, inventoryDoc) {
     description: String(getPath(product, fields.product.description) || ""),
     deliveryInfo: product.deliveryInfo || "Nation-wide delivery in Zimbabwe within 6-10 days.",
     returnsInfo: product.returnsInfo || "Returns accepted within 7 days if unworn and in original packaging.",
+    variants: Array.isArray(product.variants) ? product.variants : [],
     inventory: asNumber(
       getPath(inventoryDoc, fields.inventory.quantity) ??
       getPath(product, fields.product.inventory) ??
       product.stock,
       0
-    )
+    ),
+    inStock: product.inStock ?? asNumber(
+      getPath(inventoryDoc, fields.inventory.quantity) ??
+      getPath(product, fields.product.inventory) ??
+      product.stock,
+      0
+    ) > 0,
+    featured: Boolean(product.featured),
+    newArrival: Boolean(product.newArrival || String(getPath(product, fields.product.badge)).toLowerCase().includes("new")),
+    bestSeller: Boolean(product.bestSeller || String(getPath(product, fields.product.badge)).toLowerCase().includes("best"))
   };
 }
 
@@ -446,6 +460,89 @@ async function findDoc(logicalName, id, idField = "id") {
   return col(logicalName).findOne(objectIdQuery(id, idField));
 }
 
+function productInputToPatch(input) {
+  const patch = {};
+  const fieldMap = [
+    ["id", fields.product.id],
+    ["title", fields.product.title],
+    ["category", fields.product.category],
+    ["priceUsd", fields.product.price],
+    ["compareAtPriceUsd", "compareAtPriceUsd"],
+    ["salePriceUsd", "salePriceUsd"],
+    ["sizes", fields.product.sizes],
+    ["colours", fields.product.colours],
+    ["variants", "variants"],
+    ["rating", fields.product.rating],
+    ["badge", fields.product.badge],
+    ["imageUrl", fields.product.imageUrl],
+    ["gallery", fields.product.gallery],
+    ["description", fields.product.description],
+    ["inventory", fields.product.inventory],
+    ["active", fields.product.active],
+    ["inStock", "inStock"],
+    ["featured", "featured"],
+    ["newArrival", "newArrival"],
+    ["bestSeller", "bestSeller"]
+  ];
+  for (const [inputKey, fieldName] of fieldMap) {
+    if (Object.prototype.hasOwnProperty.call(input, inputKey)) {
+      setPath(patch, fieldName, input[inputKey]);
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(input, "deliveryInfo")) patch.deliveryInfo = input.deliveryInfo;
+  if (Object.prototype.hasOwnProperty.call(input, "returnsInfo")) patch.returnsInfo = input.returnsInfo;
+  return patch;
+}
+
+async function saveProductDocument(productId, patch) {
+  if (!database) {
+    const index = memory.products.findIndex((item) => docId(item, fields.product.id) === productId || item.id === productId);
+    if (index >= 0) {
+      memory.products[index] = { ...memory.products[index], ...patch };
+      return memory.products[index];
+    }
+    memory.products.push(patch);
+    return patch;
+  }
+  const update = { $set: patch };
+  if (!patch.createdAt) update.$setOnInsert = { createdAt: now() };
+  await col("products").updateOne(
+    objectIdQuery(productId, fields.product.id),
+    update,
+    { upsert: true }
+  );
+  return findDoc("products", productId, fields.product.id);
+}
+
+async function saveInventoryDocument(productId, quantity) {
+  const inventoryDoc = {
+    updatedAt: now()
+  };
+  setPath(inventoryDoc, fields.inventory.productId, productId);
+  setPath(inventoryDoc, fields.inventory.quantity, quantity);
+
+  if (!database) {
+    const index = memory.inventory.findIndex((item) => String(getPath(item, fields.inventory.productId) || item.productId) === productId);
+    if (index >= 0) memory.inventory[index] = { ...memory.inventory[index], ...inventoryDoc };
+    else memory.inventory.push(inventoryDoc);
+    return inventoryDoc;
+  }
+
+  await col("inventory").updateOne(
+    { [fields.inventory.productId]: productId },
+    { $set: inventoryDoc, $setOnInsert: { createdAt: now() } },
+    { upsert: true }
+  );
+  return inventoryDoc;
+}
+
+async function normalizeSavedProduct(productId) {
+  const product = await findDoc("products", productId, fields.product.id);
+  if (!product) return null;
+  const inventory = await fetchInventoryMap([docId(product, fields.product.id)]);
+  return normalizeProduct(product, inventory.get(docId(product, fields.product.id)));
+}
+
 function customerRole(customer) {
   return getPath(customer, fields.customer.role) || customer.role || "customer";
 }
@@ -535,8 +632,15 @@ const productSchema = z.object({
   title: z.string().min(2).max(160),
   category: z.string().min(2).max(80),
   priceUsd: z.number().positive().max(10000),
+  compareAtPriceUsd: z.number().positive().max(10000).optional(),
+  salePriceUsd: z.number().positive().max(10000).optional(),
   sizes: z.array(z.string().min(1)).min(1),
   colours: z.array(z.string().min(1)).min(1),
+  variants: z.array(z.object({
+    size: z.string().min(1).max(24),
+    colour: z.string().min(1).max(60),
+    inventory: z.number().int().min(0)
+  })).optional().default([]),
   rating: z.number().min(0).max(5).default(0),
   badge: z.string().min(2).max(80),
   imageUrl: z.string().url(),
@@ -545,7 +649,19 @@ const productSchema = z.object({
   deliveryInfo: z.string().min(4).max(300),
   returnsInfo: z.string().min(4).max(300),
   inventory: z.number().int().min(0),
+  inStock: z.boolean().default(true),
+  featured: z.boolean().default(false),
+  newArrival: z.boolean().default(false),
+  bestSeller: z.boolean().default(false),
   active: z.boolean().default(true)
+});
+
+const productPatchSchema = productSchema.partial().refine((value) => Object.keys(value).length > 0, {
+  message: "At least one product field is required"
+});
+
+const productImageSchema = z.object({
+  imageUrl: z.string().url()
 });
 
 const reviewSchema = z.object({
@@ -553,6 +669,10 @@ const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   body: z.string().min(5).max(800)
 });
+
+function captureRawBody(req, _res, buffer) {
+  req.rawBody = buffer?.length ? buffer.toString("utf8") : "";
+}
 
 app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -563,8 +683,8 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json({ limit: "250kb" }));
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: "250kb", verify: captureRawBody }));
+app.use(express.urlencoded({ extended: false, verify: captureRawBody }));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 240,
@@ -867,6 +987,25 @@ app.post("/api/support", asyncRoute(async (req, res) => {
   }, 201);
 }));
 
+app.post("/api/account/deletion-request", auth(), asyncRoute(async (req, res) => {
+  const { reason } = z.object({
+    reason: z.string().max(500).optional().default("Customer requested account deletion from mobile app")
+  }).parse(req.body);
+  const customerId = docId(req.user, fields.customer.id);
+  await insertDoc("deletionRequests", {
+    id: crypto.randomUUID(),
+    source: orderSource,
+    userId: customerId,
+    customer: publicCustomer(req.user),
+    reason,
+    status: "Requested",
+    createdAt: now()
+  });
+  const customer = { ...req.user, deletionRequestedAt: now(), updatedAt: now() };
+  await saveCustomer(customer);
+  ok(req, res, { ok: true, status: "Requested" }, 201);
+}));
+
 app.get("/api/payments/:orderId/verify", auth(), asyncRoute(async (req, res) => {
   const order = await getVisibleOrder(req.params.orderId, req.user);
   if (!order) return res.status(404).json({ message: "Order not found", requestId: req.id });
@@ -889,20 +1028,113 @@ app.all("/api/payments/paynow/return", asyncRoute(async (req, res) => {
   res.redirect(302, process.env.PAYMENT_RETURN_APP_URL || "norea://orders");
 }));
 
+app.get("/api/payments/viva/webhook", (_req, res) => {
+  res.status(200).json({
+    success: true,
+    provider: "viva",
+    status: "ready"
+  });
+});
+
+app.post("/api/payments/viva/webhook", (req, res) => {
+  metrics.webhooksReceived += 1;
+  const payload = req.body || {};
+  const verification = verifyVivaWebhook(req);
+  log("info", "viva_webhook_acknowledged", {
+    requestId: req.id,
+    verification,
+    event: vivaEventName(payload),
+    orderHint: extractVivaOrderHint(payload)
+  });
+
+  res.status(200).json({
+    success: true,
+    provider: "viva",
+    status: "received"
+  });
+
+  setImmediate(() => {
+    processVivaWebhook(payload, {
+      requestId: req.id,
+      verification,
+      headers: {
+        eventId: req.headers["x-viva-event-id"] || req.headers["x-event-id"],
+        correlationId: req.headers["x-correlation-id"]
+      }
+    }).catch((error) => {
+      metrics.errors += 1;
+      log("error", "viva_webhook_processing_failed", {
+        requestId: req.id,
+        error: error.message,
+        stack: error.stack
+      });
+    });
+  });
+});
+
 app.get("/api/admin/products", auth("admin"), asyncRoute(async (req, res) => {
   const { items, pagination } = await fetchProducts(req.query);
   ok(req, res, { items, pagination });
 }));
 
 app.post("/api/admin/products", auth("admin"), asyncRoute(async (req, res) => {
-  const product = {
-    ...productSchema.parse(req.body),
+  const input = productSchema.parse(req.body);
+  const patch = {
+    ...productInputToPatch(input),
     source: orderSource,
     createdAt: now(),
     updatedAt: now()
   };
-  await updateDoc("products", product.id, product, fields.product.id);
-  ok(req, res, product, 201);
+  await saveProductDocument(input.id, patch);
+  await saveInventoryDocument(input.id, input.inventory);
+  const saved = await normalizeSavedProduct(input.id);
+  ok(req, res, saved, 201);
+}));
+
+app.patch("/api/admin/products/:id", auth("admin"), asyncRoute(async (req, res) => {
+  const input = productPatchSchema.parse(req.body);
+  const existing = await findDoc("products", req.params.id, fields.product.id);
+  if (!existing) return res.status(404).json({ message: "Product not found", requestId: req.id });
+  const productId = docId(existing, fields.product.id);
+  const patch = {
+    ...productInputToPatch(input),
+    updatedAt: now()
+  };
+  await saveProductDocument(productId, patch);
+  if (Object.prototype.hasOwnProperty.call(input, "inventory")) {
+    await saveInventoryDocument(productId, input.inventory);
+  }
+  const saved = await normalizeSavedProduct(productId);
+  ok(req, res, saved);
+}));
+
+app.delete("/api/admin/products/:id", auth("admin"), asyncRoute(async (req, res) => {
+  const existing = await findDoc("products", req.params.id, fields.product.id);
+  if (!existing) return res.status(404).json({ message: "Product not found", requestId: req.id });
+  const productId = docId(existing, fields.product.id);
+  await saveProductDocument(productId, {
+    ...productInputToPatch({ active: false }),
+    updatedAt: now()
+  });
+  const saved = await normalizeSavedProduct(productId);
+  ok(req, res, saved);
+}));
+
+app.post("/api/admin/products/:id/images", auth("admin"), asyncRoute(async (req, res) => {
+  const { imageUrl } = productImageSchema.parse(req.body);
+  const existing = await findDoc("products", req.params.id, fields.product.id);
+  if (!existing) return res.status(404).json({ message: "Product not found", requestId: req.id });
+  const productId = docId(existing, fields.product.id);
+  const currentGallery = asArray(getPath(existing, fields.product.gallery));
+  const nextGallery = [...new Set([imageUrl, ...currentGallery])];
+  const patch = {
+    updatedAt: now()
+  };
+  setPath(patch, fields.product.gallery, nextGallery);
+  if (!getPath(existing, fields.product.imageUrl)) setPath(patch, fields.product.imageUrl, imageUrl);
+  await saveProductDocument(productId, patch);
+  const saved = await normalizeSavedProduct(productId);
+  ok(req, res, saved);
 }));
 
 app.get("/api/admin/orders", auth("admin"), asyncRoute(async (req, res) => {
@@ -926,9 +1158,26 @@ app.patch("/api/admin/orders/:id/status", auth("admin"), asyncRoute(async (req, 
   if (!order) return res.status(404).json({ message: "Order not found", requestId: req.id });
   const updated = await updateOrder(order.id, {
     status,
+    ...(status === "Paid" ? { paymentStatus: "Paid" } : {}),
     updatedAt: now()
   });
-  ok(req, res, updated);
+  ok(req, res, await maybeReduceInventoryForStatus(updated));
+}));
+
+app.patch("/api/admin/orders/:id", auth("admin"), asyncRoute(async (req, res) => {
+  const input = z.object({
+    status: z.enum(orderStatuses).optional(),
+    trackingNumber: z.string().max(120).optional(),
+    deliveryNote: z.string().max(500).optional()
+  }).parse(req.body);
+  const order = await findDoc("orders", req.params.id, fields.order.id);
+  if (!order) return res.status(404).json({ message: "Order not found", requestId: req.id });
+  const updated = await updateOrder(order.id, {
+    ...input,
+    ...(input.status === "Paid" ? { paymentStatus: "Paid" } : {}),
+    updatedAt: now()
+  });
+  ok(req, res, await maybeReduceInventoryForStatus(updated));
 }));
 
 app.get("/api/admin/customers", auth("admin"), asyncRoute(async (req, res) => {
@@ -1092,6 +1341,26 @@ async function updateOrder(id, patch) {
   return updated || findDoc("orders", id, fields.order.id);
 }
 
+async function maybeReduceInventoryForStatus(order) {
+  if (!order) return order;
+  const shouldReduce = ["Paid", "Processing", "Packed", "Shipped", "Out for Delivery", "Delivered"].includes(order.status);
+  if (!shouldReduce || order.inventoryReducedAt) return order;
+  for (const item of order.items || []) {
+    const product = await getProduct(item.productId);
+    if (!product) continue;
+    const nextQuantity = Math.max(0, product.inventory - item.quantity);
+    await saveInventoryDocument(item.productId, nextQuantity);
+    await saveProductDocument(item.productId, {
+      ...productInputToPatch({ inventory: nextQuantity, inStock: nextQuantity > 0 }),
+      updatedAt: now()
+    });
+  }
+  return updateOrder(order.id, {
+    inventoryReducedAt: now(),
+    updatedAt: now()
+  });
+}
+
 async function createPayment(order, method, customer) {
   const payment = {
     id: crypto.randomUUID(),
@@ -1253,11 +1522,12 @@ async function handlePaynowMessage(message, source, fallbackOrderId) {
     updatedAt: now()
   };
   await updateDoc("payments", payment.id, updatedPayment);
-  await updateOrder(order.id, {
+  const updatedOrder = await updateOrder(order.id, {
     status: mapped.orderStatus,
     paymentStatus: mapped.paymentStatus,
     updatedAt: now()
   });
+  if (mapped.paymentStatus === "Paid") await maybeReduceInventoryForStatus(updatedOrder);
   return updatedPayment;
 }
 
@@ -1276,6 +1546,289 @@ async function verifyPayment(payment, order) {
 async function findPaymentForOrder(orderId) {
   if (!database) return memory.payments.find((payment) => payment.orderId === orderId);
   return col("payments").findOne({ orderId });
+}
+
+async function findPaymentByProviderReference(providerReference) {
+  if (!providerReference) return null;
+  const reference = String(providerReference);
+  if (!database) {
+    return memory.payments.find((payment) =>
+      [payment.providerReference, payment.transactionId, payment.orderCode, payment.vivaOrderCode]
+        .filter(Boolean)
+        .map(String)
+        .includes(reference)
+    );
+  }
+  return col("payments").findOne({
+    $or: [
+      { providerReference: reference },
+      { transactionId: reference },
+      { orderCode: reference },
+      { vivaOrderCode: reference }
+    ]
+  });
+}
+
+function verifyVivaWebhook(req) {
+  const secret = process.env.VIVA_WEBHOOK_SECRET || process.env.VIVA_SIGNATURE_SECRET;
+  const signature =
+    req.headers["x-viva-signature"] ||
+    req.headers["viva-signature"] ||
+    req.headers["x-signature"] ||
+    req.headers["x-viva-wallet-signature"];
+
+  if (!secret) {
+    return { configured: false, signaturePresent: Boolean(signature), valid: true, reason: "no_secret_configured" };
+  }
+  if (!signature) {
+    return { configured: true, signaturePresent: false, valid: false, reason: "missing_signature" };
+  }
+
+  const rawBody = req.rawBody || JSON.stringify(req.body || {});
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const actual = String(Array.isArray(signature) ? signature[0] : signature).replace(/^sha256=/i, "");
+  if (!/^[a-f0-9]+$/i.test(actual)) {
+    return { configured: true, signaturePresent: true, valid: false, reason: "signature_not_hex" };
+  }
+  const valid =
+    expected.length === actual.length &&
+    crypto.timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(actual, "hex"));
+  return { configured: true, signaturePresent: true, valid, reason: valid ? "verified" : "signature_mismatch" };
+}
+
+async function processVivaWebhook(payload, context) {
+  log("info", "viva_webhook_processing_started", {
+    requestId: context.requestId,
+    event: vivaEventName(payload),
+    verification: context.verification
+  });
+
+  if (context.verification.configured && !context.verification.valid) {
+    log("warn", "viva_webhook_ignored_invalid_signature", {
+      requestId: context.requestId,
+      reason: context.verification.reason
+    });
+    return;
+  }
+
+  const resolution = await resolveVivaOrder(payload);
+  if (!resolution.order) {
+    log("warn", "viva_webhook_order_not_found", {
+      requestId: context.requestId,
+      event: vivaEventName(payload),
+      orderHint: extractVivaOrderHint(payload),
+      providerReference: extractVivaProviderReference(payload)
+    });
+    return;
+  }
+
+  const mapped = mapVivaStatus(payload);
+  const amount = extractVivaAmount(payload);
+  if (mapped.paymentStatus === "Paid" && amount !== null && !amountMatchesOrder(amount, resolution.order)) {
+    log("warn", "viva_webhook_amount_mismatch", {
+      requestId: context.requestId,
+      orderId: resolution.order.id,
+      webhookAmount: amount,
+      orderTotalUsd: resolution.order.totalUsd
+    });
+    return;
+  }
+
+  const payment = await upsertVivaPayment(resolution.order, resolution.payment, payload, mapped, context);
+  const updatedOrder = await updateOrder(resolution.order.id, {
+    status: mapped.orderStatus,
+    paymentStatus: mapped.paymentStatus,
+    updatedAt: now()
+  });
+  const finalOrder = mapped.paymentStatus === "Paid"
+    ? await maybeReduceInventoryForStatus(updatedOrder)
+    : updatedOrder;
+
+  log("info", "viva_webhook_processed", {
+    requestId: context.requestId,
+    orderId: finalOrder?.id || resolution.order.id,
+    paymentId: payment?.id,
+    paymentStatus: mapped.paymentStatus,
+    orderStatus: finalOrder?.status || mapped.orderStatus
+  });
+}
+
+async function resolveVivaOrder(payload) {
+  const orderId = extractVivaOrderHint(payload);
+  if (orderId) {
+    const order = await findDoc("orders", orderId, fields.order.id);
+    if (order) return { order, payment: await findPaymentForOrder(order.id) };
+  }
+
+  const providerReference = extractVivaProviderReference(payload);
+  const payment = await findPaymentByProviderReference(providerReference);
+  if (payment?.orderId) {
+    const order = await findDoc("orders", payment.orderId, fields.order.id);
+    if (order) return { order, payment };
+  }
+
+  return { order: null, payment: null };
+}
+
+async function upsertVivaPayment(order, payment, payload, mapped, context) {
+  const eventName = vivaEventName(payload);
+  const providerReference = extractVivaProviderReference(payload);
+  const transactionId = firstPayloadValue(payload, ["TransactionId", "TransactionId", "transactionId", "transactionid"]);
+  const orderCode = firstPayloadValue(payload, ["OrderCode", "orderCode", "ordercode"]);
+  const amount = extractVivaAmount(payload);
+  const patch = {
+    source: orderSource,
+    orderId: order.id,
+    customerId: order.userId,
+    method: "VIVA",
+    provider: "VIVA",
+    amountUsd: amount ?? order.totalUsd,
+    currency: firstPayloadValue(payload, ["CurrencyCode", "currencyCode", "Currency", "currency"]) || "USD",
+    status: mapped.paymentStatus,
+    refundStatus: payment?.refundStatus || "None",
+    providerReference,
+    transactionId,
+    orderCode,
+    vivaOrderCode: orderCode,
+    providerPayload: sanitizeProviderPayload(payload),
+    history: [
+      ...(payment?.history || []),
+      {
+        status: mapped.paymentStatus,
+        at: now(),
+        source: "viva_webhook",
+        event: eventName,
+        requestId: context.requestId
+      }
+    ],
+    verifiedAt: mapped.paymentStatus === "Paid" ? now() : payment?.verifiedAt,
+    updatedAt: now()
+  };
+
+  if (payment?.id) {
+    await updateDoc("payments", payment.id, patch);
+    return findDoc("payments", payment.id);
+  }
+
+  const record = {
+    id: crypto.randomUUID(),
+    ...patch,
+    createdAt: now()
+  };
+  await insertDoc("payments", record);
+  return record;
+}
+
+function vivaEventName(payload) {
+  return String(firstPayloadValue(payload, ["EventType", "EventTypeName", "eventType", "MessageType", "messageType", "MessageTypeId"]) || "unknown");
+}
+
+function extractVivaOrderHint(payload) {
+  const direct = firstPayloadValue(payload, [
+    "orderId",
+    "OrderId",
+    "order_id",
+    "reference",
+    "Reference",
+    "merchantReference",
+    "MerchantReference",
+    "MerchantTrns",
+    "merchantTrns",
+    "CustomerTrns",
+    "customerTrns"
+  ]);
+  const directOrder = normalizeOrderId(direct);
+  if (directOrder) return directOrder;
+  const strings = payloadStrings(payload);
+  for (const value of strings) {
+    const found = normalizeOrderId(value);
+    if (found) return found;
+  }
+  return null;
+}
+
+function extractVivaProviderReference(payload) {
+  return firstPayloadValue(payload, [
+    "TransactionId",
+    "transactionId",
+    "OrderCode",
+    "orderCode",
+    "ordercode",
+    "ReferenceNumber",
+    "referenceNumber"
+  ]);
+}
+
+function extractVivaAmount(payload) {
+  const amount = firstPayloadValue(payload, ["Amount", "amount", "TotalAmount", "totalAmount"]);
+  if (amount === undefined || amount === null || amount === "") return null;
+  const parsed = Number(amount);
+  if (!Number.isFinite(parsed)) return null;
+  return parsed > 1000 ? Number((parsed / 100).toFixed(2)) : parsed;
+}
+
+function amountMatchesOrder(amount, order) {
+  return Math.abs(Number(amount) - Number(order.totalUsd || 0)) <= 0.01;
+}
+
+function mapVivaStatus(payload) {
+  const statusId = String(firstPayloadValue(payload, ["StatusId", "statusId", "statusid"]) || "").toUpperCase();
+  const statusText = String(firstPayloadValue(payload, ["Status", "status", "State", "state"]) || "").toLowerCase();
+  const eventText = vivaEventName(payload).toLowerCase();
+  const combined = `${statusId} ${statusText} ${eventText}`;
+
+  if (statusId === "C" || /(captured|capture|paid|completed|succeeded|successful|approved|settled)/i.test(combined)) {
+    return { paymentStatus: "Paid", orderStatus: "Paid", verified: true };
+  }
+  if (["E", "F", "R", "X", "D"].includes(statusId) || /(failed|cancelled|canceled|declined|rejected|expired|error)/i.test(combined)) {
+    const cancelled = /cancelled|canceled|cancel/i.test(combined);
+    return {
+      paymentStatus: cancelled ? "Cancelled" : "Failed",
+      orderStatus: cancelled ? "Cancelled" : "Pending",
+      verified: true
+    };
+  }
+  return { paymentStatus: "Pending", orderStatus: "Pending", verified: false };
+}
+
+function firstPayloadValue(payload, names) {
+  const targets = new Set(names.map(normalizePayloadKey));
+  const stack = [payload];
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || typeof current !== "object") continue;
+    for (const [key, value] of Object.entries(current)) {
+      if (targets.has(normalizePayloadKey(key))) return value;
+      if (value && typeof value === "object") stack.push(value);
+    }
+  }
+  return undefined;
+}
+
+function payloadStrings(payload) {
+  const output = [];
+  const stack = [payload];
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || typeof current !== "object") continue;
+    for (const value of Object.values(current)) {
+      if (typeof value === "string") output.push(value);
+      else if (value && typeof value === "object") stack.push(value);
+    }
+  }
+  return output;
+}
+
+function normalizePayloadKey(key) {
+  return String(key).toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function normalizeOrderId(value) {
+  if (!value) return null;
+  const text = String(value);
+  const match = text.match(/\bNO-[A-Z0-9-]+\b/i);
+  if (match) return match[0].toUpperCase();
+  return /^NO-[A-Z0-9-]+$/i.test(text) ? text.toUpperCase() : null;
 }
 
 function sanitizeProviderPayload(message) {
