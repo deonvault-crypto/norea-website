@@ -2,156 +2,183 @@
 const products = [
   {
     "id": "contour-black-jumpsuit",
-    "name": "Contour Line Jumpsuit",
+    "name": "NORÉA Eclipse Sculpt Jumpsuit",
     "category": "Jumpsuit",
-    "price": 42,
-    "colors": [
-      "Black"
+    "price": 72,
+    "sizes": [
+      "All sizes"
     ],
-    "tag": "New Drop",
+    "colors": [
+      "All colors"
+    ],
+    "tag": "Signature",
     "image": "assets/images/03-confident-style-in-minimalist-fashion-shot.webp",
-    "description": "Sculpted black full-body activewear with contrast contour lines, zip front and a subtle NOR\u00c9A logo on top and bottom."
+    "description": "A premium sculpted jumpsuit with a sleek zip front, supportive stretch and polished NORÉA contour detailing."
   },
   {
     "id": "grey-cutout-set",
-    "name": "Sky Cutout Set",
+    "name": "NORÉA Aura Cutout Set",
     "category": "Sets",
-    "price": 38,
+    "price": 58,
+    "sizes": [
+      "All sizes"
+    ],
     "colors": [
-      "Grey"
+      "All colors"
     ],
     "tag": "Best Seller",
     "image": "assets/images/04-elevated-athleisure-for-every-movement.webp",
-    "description": "A soft grey cutout training set with matching long-sleeve layer and high-waist leggings."
+    "description": "A refined cutout active set with a long-sleeve layer, high-waist leggings and smooth all-day comfort."
   },
   {
     "id": "black-cutout-set",
-    "name": "Open Back Sculpt Set",
+    "name": "NORÉA Onyx Open-Back Set",
     "category": "Sets",
-    "price": 39,
-    "colors": [
-      "Black"
+    "price": 60,
+    "sizes": [
+      "All sizes"
     ],
-    "tag": "Signature",
+    "colors": [
+      "All colors"
+    ],
+    "tag": "Sculpt Fit",
     "image": "assets/images/05-athleisure-elegance-with-confident-style.webp",
-    "description": "Black open-back training set with sleek fit, stretch support and visible NOR\u00c9A branding."
+    "description": "A sculpted open-back training set made for confident movement, clean lines and a premium studio look."
   },
   {
     "id": "khaki-soft-set",
-    "name": "Cloud Soft Lounge Set",
+    "name": "NORÉA Drift Lounge Set",
     "category": "Lounge",
-    "price": 45,
-    "colors": [
-      "Khaki"
+    "price": 64,
+    "sizes": [
+      "All sizes"
     ],
-    "tag": "Premium",
+    "colors": [
+      "All colors"
+    ],
+    "tag": "Soft Touch",
     "image": "assets/images/06-modern-athletic-fashion-advert-with-model.webp",
-    "description": "Soft neutral lounge set with ribbed texture, cropped jacket and flared pants."
+    "description": "A soft lounge set with a cropped jacket feel, relaxed polish and enough stretch for everyday wear."
   },
   {
     "id": "purple-energy-set",
-    "name": "Purple Energy Set",
+    "name": "NORÉA Amethyst Flow Set",
     "category": "Sets",
-    "price": 36,
-    "colors": [
-      "Purple"
+    "price": 54,
+    "sizes": [
+      "All sizes"
     ],
-    "tag": "Limited",
+    "colors": [
+      "All colors"
+    ],
+    "tag": "New Season",
     "image": "assets/images/09-minimalist-fashion-with-sleek-design.webp",
-    "description": "Purple active set for everyday movement, styled with clean lines and a confident fit."
+    "description": "A smooth activewear set with a confident fit, soft support and a polished shape from class to errands."
   },
   {
     "id": "pink-short-set",
-    "name": "Blush Short Set",
+    "name": "NORÉA Blush Sprint Set",
     "category": "Shorts",
-    "price": 32,
+    "price": 46,
+    "sizes": [
+      "All sizes"
+    ],
     "colors": [
-      "Pink"
+      "All colors"
     ],
     "tag": "Popular",
     "image": "assets/images/13-confident-elegance-in-activewear-styling.webp",
-    "description": "Pink short active set with top-and-bottom NOR\u00c9A branding for a light summer training look."
+    "description": "A light short set for warm training days, styled with a fitted top and easy movement through every rep."
   },
   {
     "id": "crop-tee-pack",
-    "name": "Signature Crop Tee Pack",
+    "name": "NORÉA Signature Crop Tee",
     "category": "Tops",
-    "price": 29,
-    "colors": [
-      "Black",
-      "Brown",
-      "Burgundy",
-      "White"
+    "price": 32,
+    "sizes": [
+      "All sizes"
     ],
-    "tag": "4 Colors",
+    "colors": [
+      "All colors"
+    ],
+    "tag": "Essential",
     "image": "assets/images/14-modern-elegance-in-athletic-fashion.webp",
-    "description": "Essential crop tee collection in black, brown, burgundy and white. Minimal, breathable and fitted."
+    "description": "A fitted crop tee with breathable comfort, clean NORÉA styling and an easy premium everyday shape."
   },
   {
     "id": "yellow-three-piece",
-    "name": "Pale Yellow 3-Piece Set",
+    "name": "NORÉA Solace Three-Piece Set",
     "category": "Sets",
-    "price": 48,
+    "price": 78,
+    "sizes": [
+      "All sizes"
+    ],
     "colors": [
-      "Pale Yellow"
+      "All colors"
     ],
     "tag": "Complete Set",
     "image": "assets/images/10-minimalist-athleisure-with-modern-elegance.webp",
-    "description": "Complete pale yellow jacket, sports bra and leggings set for a soft luxury activewear look."
+    "description": "A complete jacket, sports bra and leggings set for a coordinated luxury activewear look."
   },
   {
     "id": "contour-jacket-collection",
-    "name": "Contour Jacket Collection",
+    "name": "NORÉA Tempo Zip Jacket",
     "category": "Jackets",
-    "price": 34,
-    "colors": [
-      "Black",
-      "Red",
-      "White"
+    "price": 48,
+    "sizes": [
+      "All sizes"
     ],
-    "tag": "3 Pack Look",
+    "colors": [
+      "All colors"
+    ],
+    "tag": "Layering",
     "image": "assets/images/08-luxury-athleisure-in-motion.webp",
-    "description": "Cropped contour zip jackets in white, red and black with performance stretch and clean NOR\u00c9A logo."
+    "description": "A cropped zip jacket with contour lines, performance stretch and a clean finish for layering."
   },
   {
     "id": "pink-brown-duo",
-    "name": "Blush & Brown Zip Duo",
+    "name": "NORÉA Muse Zip Set",
     "category": "Sets",
-    "price": 41,
-    "colors": [
-      "Pink",
-      "Brown"
+    "price": 62,
+    "sizes": [
+      "All sizes"
     ],
-    "tag": "Duo Style",
+    "colors": [
+      "All colors"
+    ],
+    "tag": "Elevated",
     "image": "assets/images/09-minimalist-fashion-with-sleek-design.webp",
-    "description": "Two soft-toned zip sets in pink and brown, designed for elevated everyday styling."
+    "description": "A sleek zip activewear set designed for an elevated fit, smooth support and all-day versatility."
   },
   {
     "id": "soft-power-collection",
-    "name": "Soft Power Collection",
+    "name": "NORÉA Soft Power Set",
     "category": "Sets",
-    "price": 40,
-    "colors": [
-      "Pink",
-      "White"
+    "price": 56,
+    "sizes": [
+      "All sizes"
     ],
-    "tag": "Editorial",
+    "colors": [
+      "All colors"
+    ],
+    "tag": "Soft Power",
     "image": "assets/images/20-soft-power-in-minimal-design.webp",
-    "description": "Clean editorial campaign set focused on soft tones, confident shapes and premium minimalist styling."
+    "description": "A soft, polished set with minimalist NORÉA energy, made for low-impact training and everyday styling."
   },
   {
     "id": "details-pack",
-    "name": "Details That Matter",
-    "category": "Details",
-    "price": 0,
-    "colors": [
-      "White",
-      "Blue",
-      "Pink"
+    "name": "NORÉA Luxe Texture Set",
+    "category": "Sets",
+    "price": 52,
+    "sizes": [
+      "All sizes"
     ],
-    "tag": "Fabric Story",
+    "colors": [
+      "All colors"
+    ],
+    "tag": "Luxe Detail",
     "image": "assets/images/17-luxury-activewear-details-and-textures.webp",
-    "description": "Fabric and logo detail board for showing customers the ribbed texture, zippers, waistband and thumb-hole finish."
+    "description": "A detail-led activewear set focused on ribbed texture, smooth seams, polished zips and a premium finish."
   }
 ];
 const galleryImages = [
@@ -317,7 +344,9 @@ const galleryImages = [
   }
 ];
 
-const money = (n) => n === 0 ? 'Coming soon' : 'US$' + n.toFixed(2);
+const ORDER_PHONE = '263776678288';
+const money = (n) => 'USD ' + n.toFixed(2);
+const optionText = (value) => Array.isArray(value) ? value.join(', ') : value;
 const $ = (q, el=document) => el.querySelector(q);
 const $$ = (q, el=document) => [...el.querySelectorAll(q)];
 
@@ -331,7 +360,7 @@ function saveCart() {
 
 function addToCart(id) {
   const product = products.find(p => p.id === id);
-  if (!product || product.price === 0) return openContact(product?.name || 'NORÉA item');
+  if (!product) return openContact('NORÉA item');
   const item = cart.find(i => i.id === id);
   if (item) item.qty += 1;
   else cart.push({ id, qty: 1 });
@@ -369,8 +398,8 @@ function renderProducts() {
         </div>
         <strong>${money(p.price)}</strong>
       </div>
-      <p class="muted small">${p.colors.join(' • ')}</p>
-      <button class="btn dark full" onclick="addToCart('${p.id}')">${p.price === 0 ? 'Ask about this' : 'Add to cart'}</button>
+      <p class="muted small">Sizes: ${optionText(p.sizes)} &bull; Colors: ${optionText(p.colors)}</p>
+      <button class="btn dark full" onclick="addToCart('${p.id}')">Add to cart</button>
     </article>
   `).join('');
   observeReveal();
@@ -404,7 +433,7 @@ function renderCart() {
   const list = $('#cartItems');
   if (!cart.length) {
     list.innerHTML = '<p class="empty">Your cart is empty. Add your favourite NORÉA pieces.</p>';
-    $('#cartTotal').textContent = 'US$0.00';
+    $('#cartTotal').textContent = money(0);
     return;
   }
   let total = 0;
@@ -444,9 +473,11 @@ function openQuickView(id) {
         <p class="eyebrow">${p.category} • ${p.tag}</p>
         <h2>${p.name}</h2>
         <p>${p.description}</p>
-        <p class="muted">Available colors: ${p.colors.join(', ')}</p>
+        <p class="muted">Sizes: ${optionText(p.sizes)}</p>
+        <p class="muted">Colors: ${optionText(p.colors)}</p>
+        <p class="muted">Nation-wide delivery in 6–10 days. USD, ZiG and Rand accepted.</p>
         <strong class="modal-price">${money(p.price)}</strong>
-        <button class="btn dark" onclick="addToCart('${p.id}')">${p.price === 0 ? 'Ask about this' : 'Add to cart'}</button>
+        <button class="btn dark" onclick="addToCart('${p.id}')">Add to cart</button>
       </div>
     </div>`;
   document.body.classList.add('modal-open');
@@ -455,18 +486,19 @@ function openQuickView(id) {
 function closeQuickView() { document.body.classList.remove('modal-open'); }
 
 function openContact(item = 'NORÉA order') {
-  const message = encodeURIComponent(`Hi NORÉA, I am interested in: ${item}`);
-  window.location.href = `https://wa.me/263000000000?text=${message}`;
+  const message = encodeURIComponent(`Hi NORÉA, I am interested in: ${item}. Please help me confirm size, color, payment and delivery.`);
+  window.location.href = `https://wa.me/${ORDER_PHONE}?text=${message}`;
 }
 
 function checkoutWhatsApp() {
   if (!cart.length) return;
   const lines = cart.map(item => {
     const p = products.find(prod => prod.id === item.id);
-    return `${item.qty} x ${p.name}`;
-  }).join('%0A');
+    return `${item.qty} x ${p.name} - ${money(p.price)} each`;
+  }).join('\n');
   const total = $('#cartTotal').textContent;
-  window.location.href = `https://wa.me/263000000000?text=Hi%20NOR%C3%89A%2C%20I%20want%20to%20order%3A%0A${lines}%0ATotal%3A%20${encodeURIComponent(total)}`;
+  const message = `Hi NORÉA, I want to order:\n${lines}\nTotal: ${total}\n\nPlease help me confirm my preferred sizes and colors. I understand delivery is nation-wide in 6–10 days and payment can be made in USD, ZiG or Rand.`;
+  window.location.href = `https://wa.me/${ORDER_PHONE}?text=${encodeURIComponent(message)}`;
 }
 
 function observeReveal() {
