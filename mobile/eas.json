@@ -1,0 +1,26 @@
+{
+  "cli": {
+    "version": ">= 13.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://norea-mobile-api.onrender.com/api",
+        "EXPO_PUBLIC_PRIVACY_URL": "https://norea-mobile-api.onrender.com/legal/privacy",
+        "EXPO_PUBLIC_TERMS_URL": "https://norea-mobile-api.onrender.com/legal/terms",
+        "EXPO_PUBLIC_SUPPORT_URL": "https://norea-mobile-api.onrender.com/legal/support"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

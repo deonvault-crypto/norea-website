@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Noréa",
+    "slug": "norea-mobile",
+    "owner": "deonvault-crypto",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "norea",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FCE6EF"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.norea.app",
+      "usesAppleSignIn": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "",
+        "NSPhotoLibraryUsageDescription": "",
+        "NSUserTrackingUsageDescription": ""
+      }
+    },
+    "android": {
+      "package": "com.norea.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FCE6EF"
+      },
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications"
+    ],
+    "extra": {
+      "apiUrl": "https://norea-mobile-api.onrender.com/api",
+      "privacyUrl": "https://norea-mobile-api.onrender.com/legal/privacy",
+      "termsUrl": "https://norea-mobile-api.onrender.com/legal/terms",
+      "supportUrl": "https://norea-mobile-api.onrender.com/legal/support"
+    }
+  }
+}
