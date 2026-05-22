@@ -32,7 +32,15 @@ const readinessEnvVars = [
   "PAYNOW_INTEGRATION_ID",
   "PAYNOW_INTEGRATION_KEY",
   "PAYNOW_RESULT_URL",
-  "PAYNOW_RETURN_URL"
+  "PAYNOW_RETURN_URL",
+  "VIVA_CLIENT_ID",
+  "VIVA_CLIENT_SECRET",
+  "VIVA_MERCHANT_ID",
+  "VIVA_API_KEY",
+  "VIVA_SOURCE_CODE",
+  "VIVA_WEBHOOK_SECRET",
+  "VIVA_ENVIRONMENT",
+  "VIVA_SETTLEMENT_CURRENCY"
 ];
 
 for (const key of requiredProductionEnv) {
@@ -125,6 +133,7 @@ const metrics = {
 
 let mongo = null;
 let database = null;
+let vivaTokenCache = null;
 
 async function connectDatabase() {
   if (!process.env.MONGODB_URI) return;
@@ -1015,6 +1024,39 @@ app.get("/api/payments/:orderId/verify", auth(), asyncRoute(async (req, res) => 
   ok(req, res, { order: verified.order, payment: publicPayment(verified.payment) });
 }));
 
+app.post("/api/payments/viva/create", auth(), asyncRoute(async (req, res) => {
+  const { orderId } = z.object({
+    orderId: z.string().min(2).max(120)
+  }).parse(req.body);
+  const order = await getVisibleOrder(orderId, req.user);
+  if (!order) return res.status(404).json({ message: "Order not found", requestId: req.id });
+  if (order.paymentStatus === "Paid") {
+    const paidPayment = await findPaymentForOrder(order.id);
+    return ok(req, res, {
+      order,
+      payment: publicPayment(paidPayment),
+      paymentInstructions: "Payment is already confirmed for this order.",
+      redirectUrl: paidPayment?.redirectUrl
+    });
+  }
+  const payment = await createOrReuseVivaPayment(order, req.user);
+  ok(req, res, {
+    order: await findDoc("orders", order.id, fields.order.id),
+    payment: publicPayment(payment),
+    paymentInstructions: payment.instructions,
+    redirectUrl: payment.redirectUrl
+  }, payment.reused ? 200 : 201);
+}));
+
+app.get("/api/payments/viva/status/:orderId", auth(), asyncRoute(async (req, res) => {
+  const order = await getVisibleOrder(req.params.orderId, req.user);
+  if (!order) return res.status(404).json({ message: "Order not found", requestId: req.id });
+  const payment = await findPaymentForOrder(order.id);
+  if (!payment) return res.status(404).json({ message: "Payment not found", requestId: req.id });
+  const verified = await verifyPayment(payment, order);
+  ok(req, res, { order: verified.order, payment: publicPayment(verified.payment) });
+}));
+
 app.post("/api/payments/paynow/result", asyncRoute(async (req, res) => {
   metrics.webhooksReceived += 1;
   const message = paymentMessageFromRequest(req);
@@ -1071,6 +1113,47 @@ app.post("/api/payments/viva/webhook", (req, res) => {
     });
   });
 });
+
+app.get("/api/payments/viva/return", asyncRoute(async (req, res) => {
+  const orderCode = String(req.query.s || req.query.orderCode || "");
+  const transactionId = String(req.query.t || req.query.transactionId || "");
+  const cancelled = String(req.query.cancel || req.query.status || "").toLowerCase() === "cancel";
+  const payment = await findPaymentByProviderReferences([transactionId, orderCode]);
+  const order = payment?.orderId ? await findDoc("orders", payment.orderId, fields.order.id) : null;
+
+  log("info", "viva_return_received", {
+    requestId: req.id,
+    orderId: order?.id,
+    orderCode,
+    transactionId,
+    cancelled
+  });
+
+  if (payment?.id) {
+    const nextStatus = cancelled ? "Cancelled" : payment.status;
+    await updateDoc("payments", payment.id, {
+      status: nextStatus,
+      transactionId: transactionId || payment.transactionId,
+      providerReference: transactionId || orderCode || payment.providerReference,
+      history: [
+        ...(payment.history || []),
+        { status: nextStatus, at: now(), source: "viva_return", orderCode, transactionId, cancelled }
+      ],
+      updatedAt: now()
+    });
+  }
+  if (order?.id && cancelled) {
+    await updateOrder(order.id, {
+      status: "Cancelled",
+      paymentStatus: "Cancelled",
+      updatedAt: now()
+    });
+  }
+
+  const appUrl = process.env.VIVA_RETURN_APP_URL || process.env.PAYMENT_RETURN_APP_URL || "norea://orders";
+  const separator = appUrl.includes("?") ? "&" : "?";
+  res.redirect(302, `${appUrl}${separator}provider=viva&orderId=${encodeURIComponent(order?.id || "")}&status=${cancelled ? "cancelled" : "pending"}`);
+}));
 
 app.get("/api/admin/products", auth("admin"), asyncRoute(async (req, res) => {
   const { items, pagination } = await fetchProducts(req.query);
@@ -1362,6 +1445,10 @@ async function maybeReduceInventoryForStatus(order) {
 }
 
 async function createPayment(order, method, customer) {
+  if (method === "VIVA") {
+    return createOrReuseVivaPayment(order, customer);
+  }
+
   const payment = {
     id: crypto.randomUUID(),
     source: orderSource,
@@ -1392,17 +1479,25 @@ async function createPayment(order, method, customer) {
 }
 
 function providerForMethod(method) {
+  if (method === "VIVA") return "VIVA";
   if (["PAYNOW", "VISA", "MASTERCARD"].includes(method)) return "PAYNOW";
   return method;
 }
 
 function publicPayment(payment) {
+  if (!payment) return null;
   return {
     id: payment.id,
     orderId: payment.orderId,
     method: payment.method,
     provider: payment.provider,
     amountUsd: payment.amountUsd,
+    amountPln: payment.amountPln,
+    exchangeRate: payment.exchangeRate,
+    settlementCurrency: payment.settlementCurrency || payment.currency,
+    orderCode: payment.orderCode || payment.vivaOrderCode,
+    transactionId: payment.transactionId,
+    providerReference: payment.providerReference,
     status: payment.status,
     refundStatus: payment.refundStatus,
     redirectUrl: payment.redirectUrl,
@@ -1413,11 +1508,238 @@ function publicPayment(payment) {
 }
 
 function paymentGatewayConfigured() {
+  return paynowGatewayConfigured() || vivaGatewayConfigured();
+}
+
+function paynowGatewayConfigured() {
   return Boolean(process.env.PAYNOW_INTEGRATION_ID && process.env.PAYNOW_INTEGRATION_KEY);
 }
 
+function vivaGatewayConfigured() {
+  return Boolean(process.env.VIVA_CLIENT_ID && process.env.VIVA_CLIENT_SECRET && process.env.VIVA_SOURCE_CODE);
+}
+
+async function createOrReuseVivaPayment(order, customer) {
+  const existing = await findPaymentForOrder(order.id);
+  if (
+    existing?.provider === "VIVA" &&
+    existing.redirectUrl &&
+    !["Failed", "Cancelled", "Expired"].includes(existing.status) &&
+    order.paymentStatus !== "Failed" &&
+    order.paymentStatus !== "Cancelled"
+  ) {
+    return {
+      ...existing,
+      reused: true,
+      instructions: vivaCheckoutInstructions(existing)
+    };
+  }
+
+  const basePayment = existing?.provider === "VIVA"
+    ? existing
+    : {
+        id: crypto.randomUUID(),
+        source: orderSource,
+        orderId: order.id,
+        customerId: order.userId,
+        method: "VIVA",
+        provider: "VIVA",
+        amountUsd: order.totalUsd,
+        currency: vivaSettlementCurrency(),
+        status: "Initiated",
+        refundStatus: "None",
+        history: [{ status: "Initiated", at: now(), note: "Viva payment record created" }],
+        createdAt: now()
+      };
+
+  const initiated = await initiateVivaPayment(order, basePayment, customer);
+  if (existing?.id) await updateDoc("payments", existing.id, initiated);
+  else await insertDoc("payments", initiated);
+  return initiated;
+}
+
+async function initiateVivaPayment(order, payment, customer) {
+  if (!vivaGatewayConfigured()) {
+    metrics.paymentFailures += 1;
+    throw Object.assign(new Error("Viva Smart Checkout is not configured"), { status: 503 });
+  }
+
+  const settlementCurrency = vivaSettlementCurrency();
+  if (settlementCurrency !== "PLN") {
+    throw Object.assign(new Error("Viva settlement currency must be PLN for Noréa production checkout"), { status: 503 });
+  }
+
+  const exchangeRate = vivaUsdToPlnRate();
+  const amountPln = Number((Number(order.totalUsd || 0) * exchangeRate).toFixed(2));
+  const amountMinor = Math.max(1, Math.round(amountPln * 100));
+  const customerInfo = publicCustomer(customer || order.customer || {});
+  const payload = {
+    amount: amountMinor,
+    customerTrns: `Noréa order ${order.id}`,
+    merchantTrns: order.id,
+    currencyCode: vivaCurrencyNumericCode(settlementCurrency),
+    paymentTimeout: Number(process.env.VIVA_PAYMENT_TIMEOUT_SECONDS || 1800),
+    preauth: false,
+    disableExactAmount: false,
+    disableCash: true,
+    sourceCode: process.env.VIVA_SOURCE_CODE,
+    tags: ["norea", "mobile", order.id],
+    customer: {
+      email: customerInfo.email,
+      fullName: customerInfo.name,
+      phone: order.address?.phone || customerInfo.phone || "",
+      countryCode: "ZW",
+      requestLang: "en-GB"
+    }
+  };
+
+  log("info", "viva_checkout_create_started", {
+    orderId: order.id,
+    amountUsd: order.totalUsd,
+    amountPln,
+    settlementCurrency,
+    sourceCode: process.env.VIVA_SOURCE_CODE
+  });
+
+  const token = await vivaAccessToken();
+  const response = await fetch(`${vivaApiBaseUrl()}/checkout/v2/orders`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  const responseBody = await response.json().catch(async () => ({ raw: await response.text().catch(() => "") }));
+  const orderCode = String(responseBody.orderCode || responseBody.OrderCode || "");
+  if (!response.ok || !orderCode || responseBody.ErrorCode) {
+    metrics.paymentFailures += 1;
+    log("error", "viva_checkout_create_failed", {
+      orderId: order.id,
+      status: response.status,
+      errorCode: responseBody.ErrorCode,
+      errorText: responseBody.ErrorText,
+      correlationId: responseBody.CorrelationId
+    });
+    throw Object.assign(new Error(responseBody.ErrorText || "Viva checkout creation failed"), { status: 502 });
+  }
+
+  const checkoutUrl = `${vivaCheckoutBaseUrl()}/web/checkout?ref=${encodeURIComponent(orderCode)}`;
+  const patch = {
+    ...payment,
+    method: "VIVA",
+    provider: "VIVA",
+    amountUsd: order.totalUsd,
+    amountPln,
+    amountMinor,
+    exchangeRate,
+    currency: settlementCurrency,
+    settlementCurrency,
+    status: "RedirectRequired",
+    redirectUrl: checkoutUrl,
+    providerReference: orderCode,
+    orderCode,
+    vivaOrderCode: orderCode,
+    providerPayload: sanitizeProviderPayload(responseBody),
+    instructions: vivaCheckoutInstructions({ amountPln, exchangeRate, settlementCurrency }),
+    history: [
+      ...(payment.history || []),
+      {
+        status: "RedirectRequired",
+        at: now(),
+        source: "viva_create",
+        note: "Viva Smart Checkout order created",
+        orderCode
+      }
+    ],
+    updatedAt: now()
+  };
+
+  await updateOrder(order.id, {
+    paymentMethod: "VIVA",
+    paymentStatus: "Pending",
+    paymentProvider: "VIVA",
+    paymentOrderCode: orderCode,
+    paymentAmountPln: amountPln,
+    paymentExchangeRate: exchangeRate,
+    updatedAt: now()
+  });
+  log("info", "viva_checkout_created", {
+    orderId: order.id,
+    orderCode,
+    amountPln,
+    checkoutUrl
+  });
+  return patch;
+}
+
+function vivaCheckoutInstructions(payment) {
+  const amount = typeof payment.amountPln === "number" ? `PLN ${payment.amountPln.toFixed(2)}` : "PLN";
+  return `Final card payment is processed securely in PLN by Viva. Amount due: ${amount}.`;
+}
+
+async function vivaAccessToken() {
+  if (vivaTokenCache && vivaTokenCache.expiresAt > Date.now() + 60000) return vivaTokenCache.accessToken;
+  const credentials = Buffer.from(`${process.env.VIVA_CLIENT_ID}:${process.env.VIVA_CLIENT_SECRET}`).toString("base64");
+  const response = await fetch(`${vivaAccountsBaseUrl()}/connect/token`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({ grant_type: "client_credentials" })
+  });
+  const body = await response.json().catch(async () => ({ raw: await response.text().catch(() => "") }));
+  if (!response.ok || !body.access_token) {
+    metrics.paymentFailures += 1;
+    log("error", "viva_token_failed", {
+      status: response.status,
+      error: body.error,
+      errorDescription: body.error_description
+    });
+    throw Object.assign(new Error("Unable to authenticate with Viva"), { status: 502 });
+  }
+  vivaTokenCache = {
+    accessToken: body.access_token,
+    expiresAt: Date.now() + Number(body.expires_in || 3600) * 1000
+  };
+  return vivaTokenCache.accessToken;
+}
+
+function vivaEnvironment() {
+  return String(process.env.VIVA_ENVIRONMENT || "production").toLowerCase() === "demo" ? "demo" : "production";
+}
+
+function vivaApiBaseUrl() {
+  return vivaEnvironment() === "demo" ? "https://demo-api.vivapayments.com" : "https://api.vivapayments.com";
+}
+
+function vivaAccountsBaseUrl() {
+  return vivaEnvironment() === "demo" ? "https://demo-accounts.vivapayments.com" : "https://accounts.vivapayments.com";
+}
+
+function vivaCheckoutBaseUrl() {
+  return vivaEnvironment() === "demo" ? "https://demo.vivapayments.com" : "https://www.vivapayments.com";
+}
+
+function vivaSettlementCurrency() {
+  return String(process.env.VIVA_SETTLEMENT_CURRENCY || "PLN").toUpperCase();
+}
+
+function vivaUsdToPlnRate() {
+  const configured = Number(process.env.VIVA_USD_TO_PLN_RATE || process.env.USD_TO_PLN_RATE || process.env.EXCHANGE_RATE_USD_PLN);
+  return Number.isFinite(configured) && configured > 0 ? configured : 4.0;
+}
+
+function vivaCurrencyNumericCode(currency) {
+  const codes = { EUR: 978, GBP: 826, PLN: 985, USD: 840 };
+  const code = codes[String(currency).toUpperCase()];
+  if (!code) throw Object.assign(new Error(`Unsupported Viva settlement currency: ${currency}`), { status: 503 });
+  return code;
+}
+
 async function initiatePaynow(order, payment, customer, method) {
-  if (!paymentGatewayConfigured()) {
+  if (!paynowGatewayConfigured()) {
     if (isProduction) {
       metrics.paymentFailures += 1;
       throw Object.assign(new Error("Paynow/card payment is not configured"), { status: 503 });
@@ -1532,6 +1854,25 @@ async function handlePaynowMessage(message, source, fallbackOrderId) {
 }
 
 async function verifyPayment(payment, order) {
+  if (payment.provider === "VIVA") {
+    if (!payment.transactionId) return { payment, order };
+    const transaction = await retrieveVivaTransaction(payment.transactionId);
+    const mapped = mapVivaStatus(transaction);
+    const updatedPayment = await upsertVivaPayment(order, payment, transaction, mapped, { requestId: "status-check" });
+    const updatedOrder = await updateOrder(order.id, {
+      status: mapped.orderStatus,
+      paymentStatus: mapped.paymentStatus,
+      paymentProvider: "VIVA",
+      paymentTransactionId: firstPayloadValue(transaction, ["TransactionId", "transactionId", "transactionid"]) || order.paymentTransactionId,
+      paymentProviderReference: extractVivaProviderReference(transaction) || order.paymentProviderReference,
+      paymentOrderCode: firstPayloadValue(transaction, ["OrderCode", "orderCode", "ordercode"]) || order.paymentOrderCode,
+      updatedAt: now()
+    });
+    return {
+      payment: updatedPayment,
+      order: mapped.paymentStatus === "Paid" ? await maybeReduceInventoryForStatus(updatedOrder) : updatedOrder
+    };
+  }
   if (payment.provider !== "PAYNOW" || !payment.pollUrl) {
     return { payment, order };
   }
@@ -1541,6 +1882,24 @@ async function verifyPayment(payment, order) {
   const updatedPayment = await handlePaynowMessage(message, "poll", order.id);
   const updatedOrder = await findDoc("orders", order.id, fields.order.id);
   return { payment: updatedPayment, order: updatedOrder };
+}
+
+async function retrieveVivaTransaction(transactionId) {
+  const token = await vivaAccessToken();
+  const response = await fetch(`${vivaApiBaseUrl()}/checkout/v2/transactions/${encodeURIComponent(transactionId)}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const body = await response.json().catch(async () => ({ raw: await response.text().catch(() => "") }));
+  if (!response.ok) {
+    metrics.paymentFailures += 1;
+    log("warn", "viva_transaction_retrieve_failed", {
+      transactionId,
+      status: response.status,
+      error: body.ErrorText || body.error || body.raw
+    });
+    throw Object.assign(new Error("Unable to verify Viva transaction yet"), { status: 502 });
+  }
+  return body;
 }
 
 async function findPaymentForOrder(orderId) {
@@ -1567,6 +1926,15 @@ async function findPaymentByProviderReference(providerReference) {
       { vivaOrderCode: reference }
     ]
   });
+}
+
+async function findPaymentByProviderReferences(providerReferences) {
+  const references = [...new Set((providerReferences || []).filter(Boolean).map(String))];
+  for (const reference of references) {
+    const payment = await findPaymentByProviderReference(reference);
+    if (payment) return payment;
+  }
+  return null;
 }
 
 function verifyVivaWebhook(req) {
@@ -1624,12 +1992,15 @@ async function processVivaWebhook(payload, context) {
 
   const mapped = mapVivaStatus(payload);
   const amount = extractVivaAmount(payload);
-  if (mapped.paymentStatus === "Paid" && amount !== null && !amountMatchesOrder(amount, resolution.order)) {
+  const currency = extractVivaCurrency(payload);
+  if (mapped.paymentStatus === "Paid" && amount !== null && !amountMatchesOrder(amount, resolution.order, currency)) {
     log("warn", "viva_webhook_amount_mismatch", {
       requestId: context.requestId,
       orderId: resolution.order.id,
       webhookAmount: amount,
-      orderTotalUsd: resolution.order.totalUsd
+      webhookCurrency: currency,
+      orderTotalUsd: resolution.order.totalUsd,
+      orderTotalPln: resolution.order.paymentAmountPln || resolution.order.totalPln
     });
     return;
   }
@@ -1638,6 +2009,11 @@ async function processVivaWebhook(payload, context) {
   const updatedOrder = await updateOrder(resolution.order.id, {
     status: mapped.orderStatus,
     paymentStatus: mapped.paymentStatus,
+    paymentProvider: "VIVA",
+    paymentTransactionId: firstPayloadValue(payload, ["TransactionId", "transactionId", "transactionid"]) || resolution.order.paymentTransactionId,
+    paymentProviderReference: extractVivaProviderReference(payload) || resolution.order.paymentProviderReference,
+    paymentOrderCode: firstPayloadValue(payload, ["OrderCode", "orderCode", "ordercode"]) || resolution.order.paymentOrderCode,
+    paymentAmountPln: currency === "PLN" ? amount ?? resolution.order.paymentAmountPln : resolution.order.paymentAmountPln,
     updatedAt: now()
   });
   const finalOrder = mapped.paymentStatus === "Paid"
@@ -1660,8 +2036,7 @@ async function resolveVivaOrder(payload) {
     if (order) return { order, payment: await findPaymentForOrder(order.id) };
   }
 
-  const providerReference = extractVivaProviderReference(payload);
-  const payment = await findPaymentByProviderReference(providerReference);
+  const payment = await findPaymentByProviderReferences(extractVivaProviderReferences(payload));
   if (payment?.orderId) {
     const order = await findDoc("orders", payment.orderId, fields.order.id);
     if (order) return { order, payment };
@@ -1676,14 +2051,17 @@ async function upsertVivaPayment(order, payment, payload, mapped, context) {
   const transactionId = firstPayloadValue(payload, ["TransactionId", "TransactionId", "transactionId", "transactionid"]);
   const orderCode = firstPayloadValue(payload, ["OrderCode", "orderCode", "ordercode"]);
   const amount = extractVivaAmount(payload);
+  const currency = extractVivaCurrency(payload);
   const patch = {
     source: orderSource,
     orderId: order.id,
     customerId: order.userId,
     method: "VIVA",
     provider: "VIVA",
-    amountUsd: amount ?? order.totalUsd,
-    currency: firstPayloadValue(payload, ["CurrencyCode", "currencyCode", "Currency", "currency"]) || "USD",
+    amountUsd: order.totalUsd,
+    amountPln: currency === "PLN" ? amount ?? payment?.amountPln ?? order.paymentAmountPln : payment?.amountPln ?? order.paymentAmountPln,
+    currency,
+    settlementCurrency: "PLN",
     status: mapped.paymentStatus,
     refundStatus: payment?.refundStatus || "None",
     providerReference,
@@ -1748,7 +2126,11 @@ function extractVivaOrderHint(payload) {
 }
 
 function extractVivaProviderReference(payload) {
-  return firstPayloadValue(payload, [
+  return extractVivaProviderReferences(payload)[0];
+}
+
+function extractVivaProviderReferences(payload) {
+  const names = [
     "TransactionId",
     "transactionId",
     "OrderCode",
@@ -1756,7 +2138,11 @@ function extractVivaProviderReference(payload) {
     "ordercode",
     "ReferenceNumber",
     "referenceNumber"
-  ]);
+  ];
+  return names
+    .map((name) => firstPayloadValue(payload, [name]))
+    .filter(Boolean)
+    .map(String);
 }
 
 function extractVivaAmount(payload) {
@@ -1764,11 +2150,25 @@ function extractVivaAmount(payload) {
   if (amount === undefined || amount === null || amount === "") return null;
   const parsed = Number(amount);
   if (!Number.isFinite(parsed)) return null;
-  return parsed > 1000 ? Number((parsed / 100).toFixed(2)) : parsed;
+  return String(amount).includes(".") ? parsed : Number((parsed / 100).toFixed(2));
 }
 
-function amountMatchesOrder(amount, order) {
-  return Math.abs(Number(amount) - Number(order.totalUsd || 0)) <= 0.01;
+function extractVivaCurrency(payload) {
+  const raw = firstPayloadValue(payload, ["CurrencyCode", "currencyCode", "Currency", "currency"]);
+  const value = String(raw || vivaSettlementCurrency()).toUpperCase();
+  if (value === "985") return "PLN";
+  if (value === "978") return "EUR";
+  if (value === "826") return "GBP";
+  if (value === "840") return "USD";
+  return value;
+}
+
+function amountMatchesOrder(amount, order, currency = "USD") {
+  const expected = String(currency).toUpperCase() === "PLN"
+    ? Number(order.paymentAmountPln || order.totalPln || 0)
+    : Number(order.totalUsd || 0);
+  if (!expected) return true;
+  return Math.abs(Number(amount) - expected) <= 0.01;
 }
 
 function mapVivaStatus(payload) {

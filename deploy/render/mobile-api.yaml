@@ -96,5 +96,23 @@ services:
         value: https://api.norea.fit/api/payments/paynow/return
       - key: PAYMENT_RETURN_APP_URL
         value: norea://orders
+      - key: VIVA_CLIENT_ID
+        sync: false
+      - key: VIVA_CLIENT_SECRET
+        sync: false
+      - key: VIVA_MERCHANT_ID
+        sync: false
+      - key: VIVA_API_KEY
+        sync: false
+      - key: VIVA_SOURCE_CODE
+        sync: false
+      - key: VIVA_ENVIRONMENT
+        value: production
+      - key: VIVA_SETTLEMENT_CURRENCY
+        value: PLN
       - key: VIVA_WEBHOOK_SECRET
         sync: false
+      - key: VIVA_USD_TO_PLN_RATE
+        sync: false
+      - key: VIVA_RETURN_APP_URL
+        value: norea://orders

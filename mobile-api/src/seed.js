@@ -4,13 +4,17 @@ const imageBase =
 export const orderStatuses = [
   "Pending",
   "Paid",
+  "Processing",
   "Packed",
   "Shipped",
   "Out for Delivery",
-  "Delivered"
+  "Delivered",
+  "Cancelled",
+  "Refunded"
 ];
 
 export const paymentMethods = [
+  "VIVA",
   "PAYNOW",
   "ECOCASH",
   "ONEMONEY",
