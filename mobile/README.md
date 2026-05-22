@@ -39,3 +39,5 @@ Set `EXPO_PUBLIC_API_URL` to the deployed `norea-mobile-api` service before stor
 - The app requests only notification permission.
 - It does not request contacts, SMS, call logs, background location or tracking permissions.
 - Privacy, terms and support URLs are configured through environment variables.
+- Product imagery uses stable dimensions, loading indicators, cover resizing and fallback images.
+- Product lists use `FlatList` virtualization for mobile performance.

@@ -11,6 +11,7 @@ const configuredUrl =
 export const API_URL = configuredUrl || appConfig.apiUrl;
 
 type ApiResult<T> = { data: T };
+type Paginated<T> = { items: T[]; pagination: { page: number; limit: number; total: number; totalPages: number } };
 
 async function token() {
   return SecureStore.getItemAsync("norea.jwt");
@@ -67,14 +68,16 @@ export async function signOut() {
 export async function fetchProducts(query = ""): Promise<Product[]> {
   try {
     const suffix = query ? `?${query}` : "";
-    return await request<Product[]>(`/products${suffix}`);
+    const result = await request<Product[] | Paginated<Product>>(`/products${suffix}`);
+    return Array.isArray(result) ? result : result.items;
   } catch {
     return localProducts;
   }
 }
 
 export async function fetchOrders(): Promise<Order[]> {
-  return request<Order[]>("/orders/me");
+  const result = await request<Order[] | Paginated<Order>>("/orders/me");
+  return Array.isArray(result) ? result : result.items;
 }
 
 export async function createOrder(args: {

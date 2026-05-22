@@ -72,16 +72,20 @@
       [...document.querySelectorAll('.tab')].forEach(btn => btn.classList.toggle('active', btn.textContent === section));
       if (!token) return;
       if (section === 'Products' || section === 'Inventory') {
-        const products = await call('/admin/products');
+        const result = await call('/admin/products');
+        const products = result.items || result;
         content.innerHTML = `<h2>${section}</h2><table><tr><th>Product</th><th>Category</th><th>Price</th><th>Inventory</th></tr>${products.map(p => `<tr><td>${p.title}</td><td>${p.category}</td><td>USD ${p.priceUsd}</td><td>${p.inventory}</td></tr>`).join('')}</table>`;
       } else if (section === 'Orders' || section === 'Payments' || section === 'Shipping') {
-        const orders = await call('/admin/orders');
+        const result = await call('/admin/orders');
+        const orders = result.items || result;
         content.innerHTML = `<h2>${section}</h2><table><tr><th>Order</th><th>Status</th><th>Total</th><th>Payment</th></tr>${orders.map(o => `<tr><td>${o.id}</td><td>${o.status}</td><td>USD ${o.totalUsd}</td><td>${o.paymentMethod}</td></tr>`).join('')}</table>`;
       } else if (section === 'Customers') {
-        const customers = await call('/admin/customers');
+        const result = await call('/admin/customers');
+        const customers = result.items || result;
         content.innerHTML = `<h2>Customers</h2><table><tr><th>Name</th><th>Email</th><th>Phone</th></tr>${customers.map(c => `<tr><td>${c.name}</td><td>${c.email}</td><td>${c.phone}</td></tr>`).join('')}</table>`;
       } else if (section === 'Reviews') {
-        const reviews = await call('/admin/reviews');
+        const result = await call('/admin/reviews');
+        const reviews = result.items || result;
         content.innerHTML = `<h2>Reviews</h2><table><tr><th>Product</th><th>Rating</th><th>Review</th></tr>${reviews.map(r => `<tr><td>${r.productId}</td><td>${r.rating}</td><td>${r.body}</td></tr>`).join('')}</table>`;
       } else if (section === 'Discounts') {
         content.innerHTML = `<h2>Discounts</h2><p class="muted">Create and audit discount codes through the /api/admin/discounts endpoint before publishing campaigns.</p>`;

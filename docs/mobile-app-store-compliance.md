@@ -20,6 +20,17 @@ Supported physical-goods methods:
 
 The app does not use Apple In-App Purchase or Google Play Billing because purchases are for physical goods consumed outside the app. Card-capable payment flows must be handled by a configured payment provider. The backend rejects unconfigured card/Paynow payments in production instead of creating a fake flow.
 
+The mobile API includes:
+
+- signed Paynow initiation
+- signed Paynow result URL handling
+- Paynow return URL handling
+- payment polling for verification
+- manual verification status for EcoCash, OneMoney, ZIPIT and bank transfer
+- failed-payment status handling
+- refund request records for operations teams
+- no card-number storage
+
 ## Privacy
 
 The app collects only:
@@ -54,3 +65,15 @@ Implemented controls:
 - Replace EAS project ID after creating the Expo project.
 - Generate final store screenshots from real builds.
 - Submit only after live checkout and support contacts have been tested end to end.
+
+## Explicit Apple IAP Avoidance
+
+Do not add:
+
+- coins
+- memberships
+- subscriptions
+- digital fitness plans
+- premium digital unlocks
+
+Adding these may move the app into Apple IAP territory. The current physical-goods ecommerce model is the safe path.

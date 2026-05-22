@@ -19,11 +19,63 @@ services:
       - key: MONGODB_URI
         sync: false
       - key: MONGODB_DB
-        value: norea_mobile
+        value: norea
+      - key: MOBILE_ORDER_SOURCE
+        value: mobile
+      - key: MOBILE_SEED_ON_EMPTY
+        value: "false"
+      - key: MONGO_PRODUCTS_COLLECTION
+        value: products
+      - key: MONGO_INVENTORY_COLLECTION
+        value: inventory
+      - key: MONGO_CUSTOMERS_COLLECTION
+        value: customers
+      - key: MONGO_ORDERS_COLLECTION
+        value: orders
+      - key: MONGO_REVIEWS_COLLECTION
+        value: reviews
+      - key: MONGO_PAYMENTS_COLLECTION
+        value: payments
+      - key: MONGO_REFUNDS_COLLECTION
+        value: refunds
+      - key: MONGO_PUSH_TOKENS_COLLECTION
+        value: pushTokens
+      - key: MONGO_DISCOUNTS_COLLECTION
+        value: discounts
+      - key: PRODUCT_ID_FIELD
+        value: id
+      - key: PRODUCT_TITLE_FIELD
+        value: title
+      - key: PRODUCT_CATEGORY_FIELD
+        value: category
+      - key: PRODUCT_PRICE_FIELD
+        value: priceUsd
+      - key: PRODUCT_SIZES_FIELD
+        value: sizes
+      - key: PRODUCT_COLOURS_FIELD
+        value: colours
+      - key: INVENTORY_PRODUCT_ID_FIELD
+        value: productId
+      - key: INVENTORY_QUANTITY_FIELD
+        value: quantity
+      - key: CUSTOMER_ID_FIELD
+        value: id
+      - key: CUSTOMER_EMAIL_FIELD
+        value: email
+      - key: CUSTOMER_PASSWORD_HASH_FIELD
+        value: passwordHash
+      - key: ORDER_ID_FIELD
+        value: id
+      - key: ORDER_CUSTOMER_ID_FIELD
+        value: userId
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: ADMIN_BOOTSTRAP_ENABLED
+        value: "false"
       - key: WHATSAPP_SUPPORT_NUMBER
         value: "263776678288"
       - key: BANK_TRANSFER_DETAILS
@@ -42,3 +94,5 @@ services:
         value: https://norea-mobile-api.onrender.com/api/payments/paynow/result
       - key: PAYNOW_RETURN_URL
         value: https://norea-mobile-api.onrender.com/api/payments/paynow/return
+      - key: PAYMENT_RETURN_APP_URL
+        value: norea://orders

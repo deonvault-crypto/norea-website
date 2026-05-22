@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  ActivityIndicator,
   FlatList,
   Image,
   ImageBackground,
@@ -63,6 +64,7 @@ const defaultAddress: Address = {
 };
 
 const firstProduct = localProducts[0]!;
+const fallbackProductImage = firstProduct.imageUrl;
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("Splash");
@@ -573,7 +575,7 @@ function ProductDetail({
     <ScrollView contentContainerStyle={styles.scroll}>
       <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
         {product.gallery.map((image) => (
-          <Image key={image} source={{ uri: image }} style={styles.detailImage} />
+          <OptimizedImage key={image} uri={image} style={styles.detailImage} label={product.title} />
         ))}
       </ScrollView>
       <View style={styles.detailHead}>
@@ -623,7 +625,7 @@ function CartScreen({
       ) : (
         cart.map((item, index) => (
           <View key={`${item.product.id}-${item.size}-${item.colour}`} style={styles.cartRow}>
-            <Image source={{ uri: item.product.imageUrl }} style={styles.cartImage} />
+            <OptimizedImage uri={item.product.imageUrl} style={styles.cartImage} label={item.product.title} />
             <View style={styles.cartCopy}>
               <Text style={styles.cardTitle}>{item.product.title}</Text>
               <Text style={styles.muted}>{item.size} • {item.colour}</Text>
@@ -771,7 +773,7 @@ function ListScreen({
       ) : (
         products.map((product) => (
           <Pressable key={product.id} style={styles.listProduct} onPress={() => onProduct(product)}>
-            <Image source={{ uri: product.imageUrl }} style={styles.cartImage} />
+            <OptimizedImage uri={product.imageUrl} style={styles.cartImage} label={product.title} />
             <View style={styles.cartCopy}>
               <Text style={styles.cardTitle}>{product.title}</Text>
               <Text style={styles.price}>USD {product.priceUsd.toFixed(2)}</Text>
@@ -827,7 +829,7 @@ function ProductCard({
 }) {
   return (
     <Pressable style={styles.card} onPress={onPress}>
-      <Image source={{ uri: product.imageUrl }} style={styles.cardImage} />
+      <OptimizedImage uri={product.imageUrl} style={styles.cardImage} label={product.title} />
       <Pressable style={styles.heart} onPress={onWishlist}>
         <Ionicons name={liked ? "heart" : "heart-outline"} size={20} color={colors.rose} />
       </Pressable>
@@ -836,6 +838,41 @@ function ProductCard({
       <Text style={styles.muted}>{product.category} • ★ {product.rating.toFixed(1)}</Text>
       <Text style={styles.price}>USD {product.priceUsd.toFixed(2)}</Text>
     </Pressable>
+  );
+}
+
+function OptimizedImage({
+  uri,
+  style,
+  label
+}: {
+  uri: string;
+  style: object;
+  label: string;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  return (
+    <View style={[style, styles.optimizedImageFrame]}>
+      <Image
+        source={{ uri: failed ? fallbackProductImage : uri }}
+        style={styles.optimizedImage}
+        resizeMode="cover"
+        accessibilityLabel={label}
+        progressiveRenderingEnabled
+        fadeDuration={180}
+        onLoadEnd={() => setLoading(false)}
+        onError={() => {
+          setFailed(true);
+          setLoading(false);
+        }}
+      />
+      {loading && (
+        <View style={styles.imageLoading}>
+          <ActivityIndicator color={colors.rose} />
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -1014,6 +1051,9 @@ const styles = StyleSheet.create({
   categoryText: { color: colors.navy, fontWeight: "700" },
   card: { width: 180, marginRight: 14, marginBottom: 16, backgroundColor: colors.white, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, padding: 10, ...shadow },
   cardImage: { width: "100%", aspectRatio: 0.82, borderRadius: radius.sm, backgroundColor: colors.gray },
+  optimizedImageFrame: { overflow: "hidden", backgroundColor: colors.gray },
+  optimizedImage: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, width: "100%", height: "100%" },
+  imageLoading: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, alignItems: "center", justifyContent: "center", backgroundColor: colors.gray },
   heart: { position: "absolute", right: 16, top: 16, backgroundColor: colors.white, borderRadius: radius.pill, padding: 7 },
   badge: { color: colors.rose, fontSize: 12, textTransform: "uppercase", letterSpacing: 1, marginTop: 10, marginBottom: 4, fontWeight: "800" },
   cardTitle: { color: colors.navy, fontSize: 15, fontWeight: "800", letterSpacing: 0 },
