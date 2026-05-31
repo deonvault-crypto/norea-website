@@ -2,6 +2,10 @@
   "name": "norea-website",
   "version": "1.0.0",
   "private": true,
+  "description": "NORÉA activewear storefront with secure checkout.",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "stripe": "^17.7.0"
   }
