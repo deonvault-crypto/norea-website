@@ -36,7 +36,7 @@ function readJsonBody(req, maxBytes = 1024 * 1024) {
       body += chunk;
       if (body.length > maxBytes) {
         req.destroy();
-        reject(new Error('Request body is too large.'));
+        reject(new Error('Request body is too large. Try uploading fewer images at once or smaller images.'));
       }
     });
     req.on('end', () => {
@@ -239,12 +239,16 @@ async function saveGitHubCatalog(products, sha, message) {
   return putGitHubFile(CATALOG_PATH, content, message, sha);
 }
 
-async function uploadImageFile(filePath, imageData, message) {
+function extractImageBase64(imageData) {
   const match = String(imageData || '').match(/^data:image\/(webp|png|jpeg);base64,(.+)$/);
   if (!match) throw new Error('Image must be a PNG, JPG, or WEBP file.');
+  return match[2];
+}
 
+async function uploadImageFile(filePath, imageData, message) {
+  const content = extractImageBase64(imageData);
   const existing = await getGitHubTextFile(filePath);
-  return putGitHubFile(filePath, match[2], message, existing.sha);
+  return putGitHubFile(filePath, content, message, existing.sha);
 }
 
 async function triggerDeploy() {
@@ -257,7 +261,7 @@ async function handleAdminSaveProduct(req, res) {
 
   try {
     checkAdmin(req);
-    const body = await readJsonBody(req, 11 * 1024 * 1024);
+    const body = await readJsonBody(req, 14 * 1024 * 1024);
     const productInput = body.product || {};
     const mainImageData = body.mainImageData;
     const catalog = await loadGitHubCatalog();
@@ -308,12 +312,25 @@ async function handleAdminDeleteProduct(req, res) {
   }
 }
 
+async function uploadColorImageToCatalog(product, color, imageData) {
+  if (!AVAILABLE_COLORS.includes(color)) throw new Error(`Invalid color selected: ${color}.`);
+
+  const filePath = `assets/images/${product.id}-${slugify(color)}.webp`;
+  await uploadImageFile(filePath, imageData, `Upload ${color} image for ${product.name}`);
+
+  product.imagesByColor = product.imagesByColor || {};
+  product.imagesByColor[color] = filePath;
+  if (!product.colors.includes(color)) product.colors.push(color);
+
+  return filePath;
+}
+
 async function handleAdminUpload(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed.' });
 
   try {
     checkAdmin(req);
-    const body = await readJsonBody(req, 9 * 1024 * 1024);
+    const body = await readJsonBody(req, 12 * 1024 * 1024);
     const productId = slugify(body.productId);
     const color = String(body.color || '').trim();
     const imageData = String(body.imageData || '');
@@ -321,15 +338,8 @@ async function handleAdminUpload(req, res) {
     const catalog = await loadGitHubCatalog();
     const product = catalog.products.find(p => p.id === productId);
     if (!product) throw new Error('Product not found. Add the product first.');
-    if (!AVAILABLE_COLORS.includes(color)) throw new Error('Invalid color selected.');
 
-    const filePath = `assets/images/${productId}-${slugify(color)}.webp`;
-    await uploadImageFile(filePath, imageData, `Upload ${color} image for ${product.name}`);
-
-    product.imagesByColor = product.imagesByColor || {};
-    product.imagesByColor[color] = filePath;
-    if (!product.colors.includes(color)) product.colors.push(color);
-
+    const filePath = await uploadColorImageToCatalog(product, color, imageData);
     await saveGitHubCatalog(catalog.products, catalog.sha, `Link ${color} image for ${product.name}`);
     await triggerDeploy();
 
@@ -337,6 +347,38 @@ async function handleAdminUpload(req, res) {
   } catch (error) {
     console.error('Admin upload error:', error);
     return sendJson(res, error.status || 400, { error: error.message || 'Unable to upload image.' });
+  }
+}
+
+async function handleAdminBulkUpload(req, res) {
+  if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed.' });
+
+  try {
+    checkAdmin(req);
+    const body = await readJsonBody(req, 42 * 1024 * 1024);
+    const productId = slugify(body.productId);
+    const imagesByColor = body.imagesByColor && typeof body.imagesByColor === 'object' ? body.imagesByColor : {};
+    const colors = Object.keys(imagesByColor).filter(color => imagesByColor[color]);
+
+    if (!colors.length) throw new Error('Choose at least one color image to upload.');
+
+    const catalog = await loadGitHubCatalog();
+    const product = catalog.products.find(p => p.id === productId);
+    if (!product) throw new Error('Product not found. Add the product first.');
+
+    const uploaded = [];
+    for (const color of colors) {
+      const filePath = await uploadColorImageToCatalog(product, color, imagesByColor[color]);
+      uploaded.push({ color, path: filePath });
+    }
+
+    await saveGitHubCatalog(catalog.products, catalog.sha, `Upload ${uploaded.length} color images for ${product.name}`);
+    await triggerDeploy();
+
+    return sendJson(res, 200, { colors: uploaded.map(item => item.color), uploaded, product });
+  } catch (error) {
+    console.error('Admin bulk upload error:', error);
+    return sendJson(res, error.status || 400, { error: error.message || 'Unable to upload images.' });
   }
 }
 
@@ -388,6 +430,10 @@ const server = http.createServer((req, res) => {
 
   if (requestUrl.pathname === '/api/admin/upload-color-image') {
     return handleAdminUpload(req, res);
+  }
+
+  if (requestUrl.pathname === '/api/admin/upload-color-images') {
+    return handleAdminBulkUpload(req, res);
   }
 
   return serveStatic(req, res);
