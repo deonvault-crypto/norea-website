@@ -1,1 +1,24 @@
-[]
+[
+  {
+    "id": "norea-black-shorts-set",
+    "name": "Noréa black shorts set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      "Black"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-black-shorts-set-main.webp",
+    "imagesByColor": {},
+    "description": "Premium NORÉA activewear piece designed for confidence, movement and everyday elegance.",
+    "active": true
+  }
+]
