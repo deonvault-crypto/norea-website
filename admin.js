@@ -1,28 +1,49 @@
-const PRODUCTS = [
-  ['pink-brown-duo', 'NORÉA Muse Zip Set'],
-  ['pink-short-set', 'NORÉA Blush Sprint Set'],
-  ['contour-black-jumpsuit', 'NORÉA Eclipse Sculpt Jumpsuit'],
-  ['grey-cutout-set', 'NORÉA Aura Cutout Set'],
-  ['black-cutout-set', 'NORÉA Onyx Open-Back Set'],
-  ['khaki-soft-set', 'NORÉA Drift Lounge Set'],
-  ['purple-energy-set', 'NORÉA Amethyst Flow Set'],
-  ['crop-tee-pack', 'NORÉA Signature Crop Tee'],
-  ['yellow-three-piece', 'NORÉA Solace Three-Piece Set'],
-  ['contour-jacket-collection', 'NORÉA Tempo Zip Jacket'],
-  ['soft-power-collection', 'NORÉA Soft Power Set'],
-  ['details-pack', 'NORÉA Luxe Texture Set']
-];
-
 const COLORS = ['Black', 'Pink', 'Yellow', 'Blue', 'Brown', 'Red'];
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const $ = (query) => document.querySelector(query);
+let catalog = [];
 
 function setStatus(message) {
   $('#status').textContent = message;
 }
 
-function populateSelects() {
-  $('#product').innerHTML = PRODUCTS.map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
+function slugify(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60);
+}
+
+function parseList(value, fallback) {
+  const items = String(value || '').split(',').map(item => item.trim()).filter(Boolean);
+  return items.length ? items : fallback;
+}
+
+function productOptions() {
+  if (!catalog.length) return '<option value="">Add a product first</option>';
+  return catalog.map(product => `<option value="${product.id}">${product.name}</option>`).join('');
+}
+
+function populateStaticSelects() {
   $('#color').innerHTML = COLORS.map(color => `<option value="${color}">${color}</option>`).join('');
+}
+
+function populateProducts() {
+  $('#product').innerHTML = productOptions();
+  $('#deleteProduct').innerHTML = productOptions();
+  $('#productList').innerHTML = catalog.length
+    ? catalog.map(product => `<div><strong>${product.name}</strong><br><span class="muted">${product.category} • USD ${Number(product.price).toFixed(2)} • ${product.colors.join(', ')}</span></div>`).join('')
+    : '<p class="muted">No products yet. Add your first NORÉA product below.</p>';
+}
+
+async function loadCatalog() {
+  const response = await fetch('/api/products?admin=' + Date.now());
+  const data = await response.json();
+  catalog = Array.isArray(data.products) ? data.products : [];
+  populateProducts();
 }
 
 function readAsDataUrl(file) {
@@ -62,16 +83,71 @@ async function resizeToWebp(dataUrl) {
   return canvas.toDataURL('image/webp', 0.9);
 }
 
-function previewFile() {
-  const file = $('#file').files[0];
+function previewFile(inputId, previewId) {
+  const file = $(inputId).files[0];
   if (!file) {
-    $('#preview').innerHTML = '<span class="muted">Image preview will appear here</span>';
+    $(previewId).innerHTML = '<span class="muted">Image preview will appear here</span>';
     return;
   }
 
   readAsDataUrl(file).then(dataUrl => {
-    $('#preview').innerHTML = `<img src="${dataUrl}" alt="Selected product image preview" />`;
+    $(previewId).innerHTML = `<img src="${dataUrl}" alt="Selected image preview" />`;
   }).catch(error => setStatus(error.message));
+}
+
+async function getOptionalWebp(inputId) {
+  const file = $(inputId).files[0];
+  if (!file) return null;
+  if (!file.type.startsWith('image/')) throw new Error('Please upload an image file.');
+  const dataUrl = await readAsDataUrl(file);
+  return resizeToWebp(dataUrl);
+}
+
+async function saveProduct() {
+  const password = $('#password').value.trim();
+  const name = $('#name').value.trim();
+
+  if (!password) return setStatus('Please enter the admin password.');
+  if (!name) return setStatus('Please enter the product name.');
+
+  $('#saveProductBtn').disabled = true;
+  setStatus('Saving product…');
+
+  try {
+    const product = {
+      id: slugify(name),
+      name,
+      category: $('#category').value.trim() || 'Sets',
+      price: Number($('#price').value || 0),
+      tag: $('#tag').value.trim() || 'New',
+      sizes: parseList($('#sizes').value, SIZES),
+      colors: parseList($('#colors').value, COLORS),
+      description: $('#description').value.trim(),
+      active: true
+    };
+
+    if (!product.price || product.price < 1) throw new Error('Please enter a valid price.');
+
+    const mainImageData = await getOptionalWebp('#mainImage');
+    const response = await fetch('/api/admin/save-product', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': password
+      },
+      body: JSON.stringify({ product, mainImageData })
+    });
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Product save failed.');
+
+    setStatus(`Product saved successfully.\n\n${result.product.name}\n\nNow upload color images below, or open Render and wait for deploy.`);
+    await loadCatalog();
+  } catch (error) {
+    setStatus(error.message);
+  } finally {
+    $('#saveProductBtn').disabled = false;
+  }
 }
 
 async function uploadImage() {
@@ -81,17 +157,18 @@ async function uploadImage() {
   const file = $('#file').files[0];
 
   if (!password) return setStatus('Please enter the admin password.');
-  if (!file) return setStatus('Please choose an image first.');
+  if (!productId) return setStatus('Please add/select a product first.');
+  if (!file) return setStatus('Please choose a color image first.');
   if (!file.type.startsWith('image/')) return setStatus('Please upload an image file.');
 
   $('#uploadBtn').disabled = true;
-  setStatus('Preparing image…');
+  setStatus('Preparing color image…');
 
   try {
     const dataUrl = await readAsDataUrl(file);
     const webpDataUrl = await resizeToWebp(dataUrl);
 
-    setStatus('Uploading to NORÉA website…');
+    setStatus('Uploading color image…');
     const response = await fetch('/api/admin/upload-color-image', {
       method: 'POST',
       headers: {
@@ -104,7 +181,8 @@ async function uploadImage() {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Upload failed.');
 
-    setStatus(`Uploaded successfully.\n\nSaved as:\n${result.path}\n\nNext: open Render and deploy latest commit. After deploy, customers will see this image when they click ${color}.`);
+    setStatus(`Uploaded successfully.\n\nSaved as:\n${result.path}\n\nAfter deploy, customers clicking ${color} on this product will see this image.`);
+    await loadCatalog();
   } catch (error) {
     setStatus(error.message);
   } finally {
@@ -112,8 +190,43 @@ async function uploadImage() {
   }
 }
 
+async function deleteProduct() {
+  const password = $('#password').value.trim();
+  const productId = $('#deleteProduct').value;
+  if (!password) return setStatus('Please enter the admin password.');
+  if (!productId) return setStatus('Choose a product to delete.');
+  if (!confirm('Delete this product from the store?')) return;
+
+  $('#deleteProductBtn').disabled = true;
+  setStatus('Deleting product…');
+
+  try {
+    const response = await fetch('/api/admin/delete-product', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': password
+      },
+      body: JSON.stringify({ productId })
+    });
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Delete failed.');
+    setStatus('Product deleted. The store will update after deploy.');
+    await loadCatalog();
+  } catch (error) {
+    setStatus(error.message);
+  } finally {
+    $('#deleteProductBtn').disabled = false;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  populateSelects();
-  $('#file').addEventListener('change', previewFile);
+  populateStaticSelects();
+  loadCatalog().catch(error => setStatus(error.message));
+  $('#mainImage').addEventListener('change', () => previewFile('#mainImage', '#mainPreview'));
+  $('#file').addEventListener('change', () => previewFile('#file', '#preview'));
+  $('#saveProductBtn').addEventListener('click', saveProduct);
   $('#uploadBtn').addEventListener('click', uploadImage);
+  $('#deleteProductBtn').addEventListener('click', deleteProduct);
 });
