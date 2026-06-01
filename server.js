@@ -5,25 +5,11 @@ const Stripe = require('stripe');
 
 const PORT = process.env.PORT || 10000;
 const ROOT = __dirname;
+const CATALOG_PATH = 'products.json';
 const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const AVAILABLE_COLORS = ['Black', 'Pink', 'Yellow', 'Blue', 'Brown', 'Red'];
 const GITHUB_REPO = process.env.GITHUB_REPO || 'deonvault-crypto/norea-website';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
-
-const PRODUCTS = {
-  'contour-black-jumpsuit': { name: 'NORÉA Eclipse Sculpt Jumpsuit', price: 72, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'grey-cutout-set': { name: 'NORÉA Aura Cutout Set', price: 58, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'black-cutout-set': { name: 'NORÉA Onyx Open-Back Set', price: 60, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'khaki-soft-set': { name: 'NORÉA Drift Lounge Set', price: 64, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'purple-energy-set': { name: 'NORÉA Amethyst Flow Set', price: 54, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'pink-short-set': { name: 'NORÉA Blush Sprint Set', price: 46, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'crop-tee-pack': { name: 'NORÉA Signature Crop Tee', price: 32, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'yellow-three-piece': { name: 'NORÉA Solace Three-Piece Set', price: 78, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'contour-jacket-collection': { name: 'NORÉA Tempo Zip Jacket', price: 48, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'pink-brown-duo': { name: 'NORÉA Muse Zip Set', price: 62, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'soft-power-collection': { name: 'NORÉA Soft Power Set', price: 56, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
-  'details-pack': { name: 'NORÉA Luxe Texture Set', price: 52, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS }
-};
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -77,14 +63,58 @@ function getShippingCountries() {
 }
 
 function slugify(value) {
-  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60);
 }
 
-function buildLineItems(items) {
+function safeArray(value, fallback) {
+  return Array.isArray(value) && value.length ? value.filter(Boolean) : fallback;
+}
+
+function normalizeProduct(product) {
+  const id = slugify(product.id || product.name);
+  if (!id) throw new Error('Product needs a name.');
+
+  return {
+    id,
+    name: String(product.name || 'NORÉA Product').trim(),
+    category: String(product.category || 'Sets').trim(),
+    price: Number(product.price || 0),
+    sizes: safeArray(product.sizes, AVAILABLE_SIZES),
+    colors: safeArray(product.colors, AVAILABLE_COLORS),
+    tag: String(product.tag || 'New').trim(),
+    image: String(product.image || 'assets/images/02-move-beautifully-live-confidently.webp').trim(),
+    imagesByColor: product.imagesByColor && typeof product.imagesByColor === 'object' ? product.imagesByColor : {},
+    description: String(product.description || 'Premium NORÉA activewear piece designed for confidence, movement and everyday elegance.').trim(),
+    active: product.active !== false
+  };
+}
+
+function readLocalProducts() {
+  try {
+    const raw = fs.readFileSync(path.join(ROOT, CATALOG_PATH), 'utf8');
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? data.map(normalizeProduct) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+async function getProducts() {
+  return readLocalProducts();
+}
+
+async function buildLineItems(items) {
   if (!Array.isArray(items) || items.length === 0) throw new Error('Your bag is empty.');
+  const catalog = await getProducts();
 
   return items.map(item => {
-    const product = PRODUCTS[item.id];
+    const product = catalog.find(p => p.id === item.id && p.active !== false);
     if (!product) throw new Error('One item is no longer available.');
 
     const quantity = Number.parseInt(item.qty, 10);
@@ -99,7 +129,7 @@ function buildLineItems(items) {
       quantity,
       price_data: {
         currency: 'usd',
-        unit_amount: product.price * 100,
+        unit_amount: Math.round(product.price * 100),
         product_data: {
           name: `${product.name} — ${size} / ${color}`,
           description: `Size: ${size} • Color: ${color} • Estimated delivery: 10–15 business days`
@@ -107,6 +137,12 @@ function buildLineItems(items) {
       }
     };
   });
+}
+
+async function handleProducts(req, res) {
+  if (req.method !== 'GET') return sendJson(res, 405, { error: 'Method not allowed.' });
+  const products = await getProducts();
+  return sendJson(res, 200, { products });
 }
 
 async function handleCheckout(req, res) {
@@ -117,7 +153,7 @@ async function handleCheckout(req, res) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const body = await readJsonBody(req);
     const items = body.items || [];
-    const lineItems = buildLineItems(items);
+    const lineItems = await buildLineItems(items);
     const orderSummary = items.map(item => `${item.qty}x ${item.id} (${item.size}/${item.color})`).join('; ').slice(0, 500);
     const origin = getOrigin(req);
 
@@ -161,51 +197,146 @@ async function githubRequest(endpoint, options = {}) {
   return data;
 }
 
-async function handleAdminUpload(req, res) {
-  if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed.' });
-  if (!process.env.ADMIN_PASSWORD) return sendJson(res, 500, { error: 'ADMIN_PASSWORD is not configured.' });
-
+function checkAdmin(req) {
+  if (!process.env.ADMIN_PASSWORD) throw new Error('ADMIN_PASSWORD is not configured.');
   const password = req.headers['x-admin-password'];
-  if (password !== process.env.ADMIN_PASSWORD) return sendJson(res, 401, { error: 'Wrong admin password.' });
+  if (password !== process.env.ADMIN_PASSWORD) {
+    const error = new Error('Wrong admin password.');
+    error.status = 401;
+    throw error;
+  }
+}
+
+async function getGitHubTextFile(filePath) {
+  const encodedPath = filePath.split('/').map(encodeURIComponent).join('/');
+  const file = await githubRequest(`/contents/${encodedPath}?ref=${encodeURIComponent(GITHUB_BRANCH)}`);
+  if (!file) return { sha: null, content: null };
+  const content = Buffer.from(file.content || '', 'base64').toString('utf8');
+  return { sha: file.sha, content };
+}
+
+async function putGitHubFile(filePath, contentBase64, message, sha = null) {
+  const encodedPath = filePath.split('/').map(encodeURIComponent).join('/');
+  const payload = { message, content: contentBase64, branch: GITHUB_BRANCH };
+  if (sha) payload.sha = sha;
+
+  return githubRequest(`/contents/${encodedPath}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+async function loadGitHubCatalog() {
+  const file = await getGitHubTextFile(CATALOG_PATH);
+  if (!file.content) return { products: [], sha: file.sha };
+  const parsed = JSON.parse(file.content);
+  return { products: Array.isArray(parsed) ? parsed.map(normalizeProduct) : [], sha: file.sha };
+}
+
+async function saveGitHubCatalog(products, sha, message) {
+  const content = Buffer.from(JSON.stringify(products.map(normalizeProduct), null, 2) + '\n', 'utf8').toString('base64');
+  return putGitHubFile(CATALOG_PATH, content, message, sha);
+}
+
+async function uploadImageFile(filePath, imageData, message) {
+  const match = String(imageData || '').match(/^data:image\/(webp|png|jpeg);base64,(.+)$/);
+  if (!match) throw new Error('Image must be a PNG, JPG, or WEBP file.');
+
+  const existing = await getGitHubTextFile(filePath);
+  return putGitHubFile(filePath, match[2], message, existing.sha);
+}
+
+async function triggerDeploy() {
+  if (!process.env.RENDER_DEPLOY_HOOK_URL) return;
+  fetch(process.env.RENDER_DEPLOY_HOOK_URL, { method: 'POST' }).catch(error => console.warn('Deploy hook failed:', error));
+}
+
+async function handleAdminSaveProduct(req, res) {
+  if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed.' });
 
   try {
+    checkAdmin(req);
+    const body = await readJsonBody(req, 11 * 1024 * 1024);
+    const productInput = body.product || {};
+    const mainImageData = body.mainImageData;
+    const catalog = await loadGitHubCatalog();
+    const existing = catalog.products.find(p => p.id === slugify(productInput.id || productInput.name));
+
+    const product = normalizeProduct({
+      ...(existing || {}),
+      ...productInput,
+      id: slugify(productInput.id || productInput.name)
+    });
+
+    if (mainImageData) {
+      const imagePath = `assets/images/${product.id}-main.webp`;
+      await uploadImageFile(imagePath, mainImageData, `Upload main image for ${product.name}`);
+      product.image = imagePath;
+    }
+
+    const nextProducts = catalog.products.filter(p => p.id !== product.id);
+    nextProducts.push(product);
+    await saveGitHubCatalog(nextProducts, catalog.sha, `Save product ${product.name}`);
+    await triggerDeploy();
+
+    return sendJson(res, 200, { product, message: 'Product saved.' });
+  } catch (error) {
+    console.error('Admin product save error:', error);
+    return sendJson(res, error.status || 400, { error: error.message || 'Unable to save product.' });
+  }
+}
+
+async function handleAdminDeleteProduct(req, res) {
+  if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed.' });
+
+  try {
+    checkAdmin(req);
+    const body = await readJsonBody(req);
+    const id = slugify(body.productId);
+    if (!id) throw new Error('Choose a product to delete.');
+
+    const catalog = await loadGitHubCatalog();
+    const nextProducts = catalog.products.filter(p => p.id !== id);
+    await saveGitHubCatalog(nextProducts, catalog.sha, `Delete product ${id}`);
+    await triggerDeploy();
+
+    return sendJson(res, 200, { message: 'Product deleted.' });
+  } catch (error) {
+    console.error('Admin product delete error:', error);
+    return sendJson(res, error.status || 400, { error: error.message || 'Unable to delete product.' });
+  }
+}
+
+async function handleAdminUpload(req, res) {
+  if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed.' });
+
+  try {
+    checkAdmin(req);
     const body = await readJsonBody(req, 9 * 1024 * 1024);
-    const productId = String(body.productId || '').trim();
+    const productId = slugify(body.productId);
     const color = String(body.color || '').trim();
     const imageData = String(body.imageData || '');
 
-    if (!PRODUCTS[productId]) throw new Error('Invalid product selected.');
+    const catalog = await loadGitHubCatalog();
+    const product = catalog.products.find(p => p.id === productId);
+    if (!product) throw new Error('Product not found. Add the product first.');
     if (!AVAILABLE_COLORS.includes(color)) throw new Error('Invalid color selected.');
 
-    const match = imageData.match(/^data:image\/(webp|png|jpeg);base64,(.+)$/);
-    if (!match) throw new Error('Image must be a PNG, JPG, or WEBP file.');
-
-    const content = match[2];
     const filePath = `assets/images/${productId}-${slugify(color)}.webp`;
-    const encodedPath = filePath.split('/').map(encodeURIComponent).join('/');
-    const existing = await githubRequest(`/contents/${encodedPath}?ref=${encodeURIComponent(GITHUB_BRANCH)}`);
+    await uploadImageFile(filePath, imageData, `Upload ${color} image for ${product.name}`);
 
-    const payload = {
-      message: `Upload ${color} image for ${PRODUCTS[productId].name}`,
-      content,
-      branch: GITHUB_BRANCH
-    };
-    if (existing && existing.sha) payload.sha = existing.sha;
+    product.imagesByColor = product.imagesByColor || {};
+    product.imagesByColor[color] = filePath;
+    if (!product.colors.includes(color)) product.colors.push(color);
 
-    const result = await githubRequest(`/contents/${encodedPath}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    await saveGitHubCatalog(catalog.products, catalog.sha, `Link ${color} image for ${product.name}`);
+    await triggerDeploy();
 
-    if (process.env.RENDER_DEPLOY_HOOK_URL) {
-      fetch(process.env.RENDER_DEPLOY_HOOK_URL, { method: 'POST' }).catch(error => console.warn('Deploy hook failed:', error));
-    }
-
-    return sendJson(res, 200, { path: filePath, commit: result && result.commit && result.commit.sha });
+    return sendJson(res, 200, { path: filePath, product });
   } catch (error) {
     console.error('Admin upload error:', error);
-    return sendJson(res, 400, { error: error.message || 'Unable to upload image.' });
+    return sendJson(res, error.status || 400, { error: error.message || 'Unable to upload image.' });
   }
 }
 
@@ -239,8 +370,20 @@ const server = http.createServer((req, res) => {
     return sendJson(res, 200, { ok: true, service: 'norea-website' });
   }
 
+  if (requestUrl.pathname === '/api/products') {
+    return handleProducts(req, res);
+  }
+
   if (requestUrl.pathname === '/api/create-checkout-session') {
     return handleCheckout(req, res);
+  }
+
+  if (requestUrl.pathname === '/api/admin/save-product') {
+    return handleAdminSaveProduct(req, res);
+  }
+
+  if (requestUrl.pathname === '/api/admin/delete-product') {
+    return handleAdminDeleteProduct(req, res);
   }
 
   if (requestUrl.pathname === '/api/admin/upload-color-image') {
