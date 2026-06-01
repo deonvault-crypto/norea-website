@@ -1,15 +1,16 @@
 (() => {
   const COLOR_META = {
-    Black: { hex: '#111111', tint: 'rgba(17,17,17,.56)', opacity: '.28' },
-    Pink: { hex: '#f4aac7', tint: 'rgba(244,170,199,.62)', opacity: '.34' },
-    Yellow: { hex: '#f6d75f', tint: 'rgba(246,215,95,.56)', opacity: '.30' },
-    Blue: { hex: '#4f8edb', tint: 'rgba(79,142,219,.56)', opacity: '.32' },
-    Brown: { hex: '#5b3d32', tint: 'rgba(91,61,50,.58)', opacity: '.32' },
-    Red: { hex: '#c73737', tint: 'rgba(199,55,55,.56)', opacity: '.32' }
+    Black: { hex: '#111111', rgb: [17, 17, 17] },
+    Pink: { hex: '#f4aac7', rgb: [244, 170, 199] },
+    Yellow: { hex: '#f6d75f', rgb: [246, 215, 95] },
+    Blue: { hex: '#4f8edb', rgb: [79, 142, 219] },
+    Brown: { hex: '#5b3d32', rgb: [91, 61, 50] },
+    Red: { hex: '#c73737', rgb: [199, 55, 55] }
   };
 
-  const missingImages = new Set();
   const originalOpenQuickView = window.openQuickView;
+  const recolorCache = new Map();
+  const pendingRecolors = new Map();
 
   function productList() {
     return typeof products !== 'undefined' ? products : [];
@@ -19,15 +20,8 @@
     return productList().find(product => product.id === id);
   }
 
-  function slug(value) {
-    return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  }
-
-  function colorPath(product, colorName) {
-    const key = `${product.id}:${colorName}`;
-    if (missingImages.has(key)) return product.image;
-    if (product.imagesByColor && product.imagesByColor[colorName]) return product.imagesByColor[colorName];
-    return `assets/images/${product.id}-${slug(colorName)}.webp`;
+  function getColorMeta(colorName) {
+    return COLOR_META[colorName] || COLOR_META.Black;
   }
 
   function installStyles() {
@@ -36,58 +30,16 @@
     const style = document.createElement('style');
     style.id = 'norea-color-switch-styles';
     style.textContent = `
-      .color-sensitive{position:relative;overflow:hidden;--product-tint:transparent;--tint-opacity:0;}
-      .color-sensitive:after{content:"";position:absolute;inset:0;background:var(--product-tint);opacity:var(--tint-opacity);mix-blend-mode:multiply;pointer-events:none;transition:background .25s ease,opacity .25s ease;z-index:1;}
-      .color-sensitive img{position:relative;z-index:0;transition:opacity .22s ease,transform .7s ease,filter .22s ease;}
+      .product-image-wrap,.modal-image-wrap,.cart-image-wrap{position:relative;overflow:hidden;}
+      .product-image-wrap:after,.modal-image-wrap:after,.cart-image-wrap:after{display:none!important;}
+      .product-image-wrap img,.modal-image-wrap img,.cart-image-wrap img{transition:opacity .22s ease,transform .7s ease,filter .22s ease;}
       .product-image-wrap .product-badge,.product-image-wrap .quick-view{z-index:2;}
-      .color-switching{opacity:.38;}
+      .color-switching{opacity:.32;filter:blur(.6px);}
       .cart-image-wrap{width:82px;height:100px;border-radius:.8rem;background:var(--stone);}
       .cart-image-wrap img{width:100%;height:100%;object-fit:cover;border-radius:.8rem;}
       .swatch-option span:last-child{letter-spacing:.01em;}
     `;
     document.head.appendChild(style);
-  }
-
-  function colorMeta(colorName) {
-    return COLOR_META[colorName] || COLOR_META.Black;
-  }
-
-  function applyTint(wrap, colorName) {
-    if (!wrap) return;
-    const meta = colorMeta(colorName);
-    wrap.classList.add('color-sensitive');
-    wrap.style.setProperty('--product-tint', meta.tint);
-    wrap.style.setProperty('--tint-opacity', meta.opacity);
-    wrap.dataset.selectedColor = colorName;
-  }
-
-  function swapImage(img, product, colorName) {
-    if (!img || !product) return;
-
-    const key = `${product.id}:${colorName}`;
-    const nextSrc = colorPath(product, colorName);
-    img.dataset.defaultSrc = product.image;
-    img.dataset.colorImageKey = key;
-    img.dataset.currentColor = colorName;
-
-    if (img.src.endsWith(nextSrc)) return;
-
-    img.classList.add('color-switching');
-    img.onload = () => img.classList.remove('color-switching');
-    img.onerror = () => {
-      missingImages.add(key);
-      img.onerror = null;
-      img.src = product.image;
-      img.classList.remove('color-switching');
-    };
-    img.src = nextSrc;
-  }
-
-  function getProductCard(id) {
-    return [...document.querySelectorAll('.product-card')].find(card => {
-      const button = card.querySelector('.quick-view');
-      return button && button.getAttribute('onclick')?.includes(`'${id}'`);
-    });
   }
 
   function cleanSwatches(root = document) {
@@ -105,28 +57,146 @@
     });
   }
 
+  function getProductCard(id) {
+    return [...document.querySelectorAll('.product-card')].find(card => {
+      const button = card.querySelector('.quick-view');
+      return button && button.getAttribute('onclick')?.includes(`'${id}'`);
+    });
+  }
+
+  function getOriginalSrc(img, product) {
+    if (!img.dataset.originalSrc) img.dataset.originalSrc = product.image || img.currentSrc || img.src;
+    return img.dataset.originalSrc;
+  }
+
+  function isSkinPixel(r, g, b, luma) {
+    return luma > 40 && luma < 175 && r > g * 1.12 && r > b * 1.18 && g > b * .82;
+  }
+
+  function shouldRecolorPixel(r, g, b, x, y, width, height) {
+    const luma = (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+    const relY = y / height;
+    const relX = x / width;
+
+    if (luma > 145) return false;                 // keep white piping, shoes, socks and background
+    if (relY < .16 || relY > .91) return false;   // keep wordmark/top and lower shoe area
+    if (isSkinPixel(r, g, b, luma)) return false;  // keep skin tone natural
+
+    const isDarkGarment = luma < 105;
+    const isMidGarment = luma < 132 && Math.abs(r - g) < 35 && Math.abs(g - b) < 35;
+    const inBodyZone = (relX > .10 && relX < .48) || (relX > .52 && relX < .90);
+
+    return inBodyZone && (isDarkGarment || isMidGarment);
+  }
+
+  function recolorPixel(r, g, b, targetRgb) {
+    const luma = (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+    const shade = Math.max(.45, Math.min(1.22, .66 + (luma / 255)));
+    const texture = Math.max(-18, Math.min(18, luma - 55));
+
+    return [
+      Math.max(0, Math.min(255, targetRgb[0] * shade + texture)),
+      Math.max(0, Math.min(255, targetRgb[1] * shade + texture)),
+      Math.max(0, Math.min(255, targetRgb[2] * shade + texture))
+    ];
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = src;
+    });
+  }
+
+  async function createColorCopy(src, colorName) {
+    if (colorName === 'Black') return src;
+
+    const cacheKey = `${src}|${colorName}`;
+    if (recolorCache.has(cacheKey)) return recolorCache.get(cacheKey);
+    if (pendingRecolors.has(cacheKey)) return pendingRecolors.get(cacheKey);
+
+    const promise = (async () => {
+      const source = await loadImage(src);
+      const canvas = document.createElement('canvas');
+      const width = source.naturalWidth || source.width;
+      const height = source.naturalHeight || source.height;
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(source, 0, 0, width, height);
+
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      const targetRgb = getColorMeta(colorName).rgb;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const pixel = i / 4;
+        const x = pixel % width;
+        const y = Math.floor(pixel / width);
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        if (!shouldRecolorPixel(r, g, b, x, y, width, height)) continue;
+
+        const [nr, ng, nb] = recolorPixel(r, g, b, targetRgb);
+        data[i] = nr;
+        data[i + 1] = ng;
+        data[i + 2] = nb;
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      const result = canvas.toDataURL('image/png');
+      recolorCache.set(cacheKey, result);
+      pendingRecolors.delete(cacheKey);
+      return result;
+    })().catch(error => {
+      pendingRecolors.delete(cacheKey);
+      console.warn('NORÉA color image generation failed:', error);
+      return src;
+    });
+
+    pendingRecolors.set(cacheKey, promise);
+    return promise;
+  }
+
+  async function swapToColor(img, product, colorName) {
+    if (!img || !product) return;
+
+    const originalSrc = getOriginalSrc(img, product);
+    img.dataset.currentColor = colorName;
+    img.classList.add('color-switching');
+
+    const nextSrc = await createColorCopy(originalSrc, colorName);
+
+    if (img.dataset.currentColor === colorName) {
+      img.onload = () => img.classList.remove('color-switching');
+      img.onerror = () => img.classList.remove('color-switching');
+      img.src = nextSrc;
+      if (nextSrc.startsWith('data:')) setTimeout(() => img.classList.remove('color-switching'), 60);
+    }
+  }
+
   function updateCardImage(id, colorName) {
     const product = getProduct(id);
     const card = getProductCard(id);
     if (!product || !card) return;
 
-    const wrap = card.querySelector('.product-image-wrap');
-    const img = wrap?.querySelector('img');
-    applyTint(wrap, colorName);
-    swapImage(img, product, colorName);
+    const img = card.querySelector('.product-image-wrap img');
+    swapToColor(img, product, colorName);
   }
 
   function updateModalImage(id, colorName) {
     const product = getProduct(id);
-    const wrap = document.querySelector('#modalContent .modal-image-wrap');
-    const img = wrap?.querySelector('img');
-    if (!product || !wrap || !img) return;
-
-    applyTint(wrap, colorName);
-    swapImage(img, product, colorName);
+    const img = document.querySelector('#modalContent .modal-image-wrap img');
+    if (!product || !img) return;
+    swapToColor(img, product, colorName);
   }
 
-  window.selectColor = function selectColorWithImage(id, colorName, context = 'card') {
+  window.selectColor = function selectColorWithRealImage(id, colorName, context = 'card') {
     const picker = document.getElementById(`${context}-color-${id}`);
     updatePicker(picker, colorName);
     cleanSwatches(picker || document);
@@ -161,20 +231,21 @@
       const details = row.textContent || '';
       const colorName = Object.keys(COLOR_META).find(color => details.includes(color));
       if (!colorName) return;
+
+      const productName = row.querySelector('strong')?.textContent?.trim();
+      const product = productList().find(item => item.name === productName);
       const img = row.querySelector('img');
-      if (!img) return;
-      const wrap = img.parentElement;
-      applyTint(wrap, colorName);
+      if (product && img) swapToColor(img, product, colorName);
     });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     installStyles();
-    enhanceProductCards();
-    enhanceCartImages();
+    cleanSwatches();
 
     const productGrid = document.getElementById('productGrid');
     if (productGrid) {
+      requestAnimationFrame(enhanceProductCards);
       new MutationObserver(() => requestAnimationFrame(enhanceProductCards)).observe(productGrid, { childList: true });
     }
 
