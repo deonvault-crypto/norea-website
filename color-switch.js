@@ -11,6 +11,7 @@
   const originalOpenQuickView = window.openQuickView;
   const recolorCache = new Map();
   const pendingRecolors = new Map();
+  const uploadedImageCache = new Map();
 
   function productList() {
     return typeof products !== 'undefined' ? products : [];
@@ -22,6 +23,14 @@
 
   function getColorMeta(colorName) {
     return COLOR_META[colorName] || COLOR_META.Black;
+  }
+
+  function slug(value) {
+    return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function uploadedColorPath(product, colorName) {
+    return `assets/images/${product.id}-${slug(colorName)}.webp`;
   }
 
   function installStyles() {
@@ -69,6 +78,29 @@
     return img.dataset.originalSrc;
   }
 
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = src;
+    });
+  }
+
+  async function getUploadedImageIfExists(product, colorName) {
+    const src = uploadedColorPath(product, colorName);
+    if (uploadedImageCache.has(src)) return uploadedImageCache.get(src);
+
+    try {
+      await loadImage(src);
+      uploadedImageCache.set(src, src);
+      return src;
+    } catch {
+      uploadedImageCache.set(src, null);
+      return null;
+    }
+  }
+
   function isSkinPixel(r, g, b, luma) {
     return luma > 40 && luma < 175 && r > g * 1.12 && r > b * 1.18 && g > b * .82;
   }
@@ -78,9 +110,9 @@
     const relY = y / height;
     const relX = x / width;
 
-    if (luma > 145) return false;                 // keep white piping, shoes, socks and background
-    if (relY < .16 || relY > .91) return false;   // keep wordmark/top and lower shoe area
-    if (isSkinPixel(r, g, b, luma)) return false;  // keep skin tone natural
+    if (luma > 145) return false;
+    if (relY < .16 || relY > .91) return false;
+    if (isSkinPixel(r, g, b, luma)) return false;
 
     const isDarkGarment = luma < 105;
     const isMidGarment = luma < 132 && Math.abs(r - g) < 35 && Math.abs(g - b) < 35;
@@ -99,15 +131,6 @@
       Math.max(0, Math.min(255, targetRgb[1] * shade + texture)),
       Math.max(0, Math.min(255, targetRgb[2] * shade + texture))
     ];
-  }
-
-  function loadImage(src) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = reject;
-      image.src = src;
-    });
   }
 
   async function createColorCopy(src, colorName) {
@@ -163,14 +186,20 @@
     return promise;
   }
 
+  async function getImageForColor(img, product, colorName) {
+    const uploaded = await getUploadedImageIfExists(product, colorName);
+    if (uploaded) return uploaded;
+    return createColorCopy(getOriginalSrc(img, product), colorName);
+  }
+
   async function swapToColor(img, product, colorName) {
     if (!img || !product) return;
 
-    const originalSrc = getOriginalSrc(img, product);
+    getOriginalSrc(img, product);
     img.dataset.currentColor = colorName;
     img.classList.add('color-switching');
 
-    const nextSrc = await createColorCopy(originalSrc, colorName);
+    const nextSrc = await getImageForColor(img, product, colorName);
 
     if (img.dataset.currentColor === colorName) {
       img.onload = () => img.classList.remove('color-switching');
@@ -196,7 +225,7 @@
     swapToColor(img, product, colorName);
   }
 
-  window.selectColor = function selectColorWithRealImage(id, colorName, context = 'card') {
+  window.selectColor = function selectColorWithManualImage(id, colorName, context = 'card') {
     const picker = document.getElementById(`${context}-color-${id}`);
     updatePicker(picker, colorName);
     cleanSwatches(picker || document);
