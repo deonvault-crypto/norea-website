@@ -24,5 +24,22 @@
     },
     "description": "Noréa shorts and top set for activewear",
     "active": true
+  },
+  {
+    "id": "norea-sculpt-short-set",
+    "name": "NORÉA Sculpt Short Set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "M"
+    ],
+    "colors": [
+      "Brown"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-sculpt-short-set-main.webp",
+    "imagesByColor": {},
+    "description": "A soft, sculpting activewear set made for movement, comfort, and everyday confidence. Features a fitted top, high-waisted shorts, and a minimalist NORÉA logo detail.",
+    "active": true
   }
 ]
