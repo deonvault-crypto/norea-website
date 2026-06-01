@@ -1,148 +1,16 @@
 const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const AVAILABLE_COLORS = [
-  { name: 'Black', hex: '#111111', emoji: '⚫️' },
-  { name: 'Pink', hex: '#f4aac7', emoji: '🌸' },
-  { name: 'Yellow', hex: '#f6d75f', emoji: '🟡' },
-  { name: 'Blue', hex: '#4f8edb', emoji: '🔵' },
-  { name: 'Brown', hex: '#5b3d32', emoji: '🟤' },
-  { name: 'Red', hex: '#c73737', emoji: '🔴' }
+  { name: 'Black', hex: '#111111' },
+  { name: 'Pink', hex: '#f4aac7' },
+  { name: 'Yellow', hex: '#f6d75f' },
+  { name: 'Blue', hex: '#4f8edb' },
+  { name: 'Brown', hex: '#5b3d32' },
+  { name: 'Red', hex: '#c73737' }
 ];
 const COLOR_NAMES = AVAILABLE_COLORS.map(color => color.name);
 
-const products = [
-  {
-    id: 'pink-brown-duo',
-    name: 'NORÉA Muse Zip Set',
-    category: 'Sets',
-    price: 62,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Elevated',
-    image: 'assets/images/09-minimalist-fashion-with-sleek-design.webp',
-    description: 'A sleek zip activewear set designed for an elevated fit, smooth support and all-day versatility.'
-  },
-  {
-    id: 'pink-short-set',
-    name: 'NORÉA Blush Sprint Set',
-    category: 'Shorts',
-    price: 46,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Popular',
-    image: 'assets/images/13-confident-elegance-in-activewear-styling.webp',
-    description: 'A light short set for warm training days, styled with a fitted top and easy movement through every rep.'
-  },
-  {
-    id: 'contour-black-jumpsuit',
-    name: 'NORÉA Eclipse Sculpt Jumpsuit',
-    category: 'Jumpsuit',
-    price: 72,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Signature',
-    image: 'assets/images/03-confident-style-in-minimalist-fashion-shot.webp',
-    description: 'A premium sculpted jumpsuit with a sleek zip front, supportive stretch and polished NORÉA contour detailing.'
-  },
-  {
-    id: 'grey-cutout-set',
-    name: 'NORÉA Aura Cutout Set',
-    category: 'Sets',
-    price: 58,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Best Seller',
-    image: 'assets/images/04-elevated-athleisure-for-every-movement.webp',
-    description: 'A refined cutout active set with a long-sleeve layer, high-waist leggings and smooth all-day comfort.'
-  },
-  {
-    id: 'black-cutout-set',
-    name: 'NORÉA Onyx Open-Back Set',
-    category: 'Sets',
-    price: 60,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Sculpt Fit',
-    image: 'assets/images/05-athleisure-elegance-with-confident-style.webp',
-    description: 'A sculpted open-back training set made for confident movement, clean lines and a premium studio look.'
-  },
-  {
-    id: 'khaki-soft-set',
-    name: 'NORÉA Drift Lounge Set',
-    category: 'Lounge',
-    price: 64,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Soft Touch',
-    image: 'assets/images/06-modern-athletic-fashion-advert-with-model.webp',
-    description: 'A soft lounge set with a cropped jacket feel, relaxed polish and enough stretch for everyday wear.'
-  },
-  {
-    id: 'purple-energy-set',
-    name: 'NORÉA Amethyst Flow Set',
-    category: 'Sets',
-    price: 54,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'New Season',
-    image: 'assets/images/09-minimalist-fashion-with-sleek-design.webp',
-    description: 'A smooth activewear set with a confident fit, soft support and a polished shape from class to errands.'
-  },
-  {
-    id: 'crop-tee-pack',
-    name: 'NORÉA Signature Crop Tee',
-    category: 'Tops',
-    price: 32,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Essential',
-    image: 'assets/images/14-modern-elegance-in-athletic-fashion.webp',
-    description: 'A fitted crop tee with breathable comfort, clean NORÉA styling and an easy premium everyday shape.'
-  },
-  {
-    id: 'yellow-three-piece',
-    name: 'NORÉA Solace Three-Piece Set',
-    category: 'Sets',
-    price: 78,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Complete Set',
-    image: 'assets/images/10-minimalist-athleisure-with-modern-elegance.webp',
-    description: 'A complete jacket, sports bra and leggings set for a coordinated luxury activewear look.'
-  },
-  {
-    id: 'contour-jacket-collection',
-    name: 'NORÉA Tempo Zip Jacket',
-    category: 'Jackets',
-    price: 48,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Layering',
-    image: 'assets/images/08-luxury-athleisure-in-motion.webp',
-    description: 'A cropped zip jacket with contour lines, performance stretch and a clean finish for layering.'
-  },
-  {
-    id: 'soft-power-collection',
-    name: 'NORÉA Soft Power Set',
-    category: 'Sets',
-    price: 56,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Soft Power',
-    image: 'assets/images/20-soft-power-in-minimal-design.webp',
-    description: 'A soft, polished set with minimalist NORÉA energy, made for low-impact training and everyday styling.'
-  },
-  {
-    id: 'details-pack',
-    name: 'NORÉA Luxe Texture Set',
-    category: 'Sets',
-    price: 52,
-    sizes: AVAILABLE_SIZES,
-    colors: COLOR_NAMES,
-    tag: 'Luxe Detail',
-    image: 'assets/images/17-luxury-activewear-details-and-textures.webp',
-    description: 'A detail-led activewear set focused on ribbed texture, smooth seams, polished zips and a premium finish.'
-  }
-];
+let products = [];
+window.products = products;
 
 const galleryImages = [
   { src: 'assets/images/01-confident-stride-in-serene-surroundings.webp', alt: 'confident stride in serene surroundings' },
@@ -151,31 +19,52 @@ const galleryImages = [
   { src: 'assets/images/11-athleisure-fashion-lookbook-with-nor-a.webp', alt: 'athleisure fashion lookbook with NORÉA' },
   { src: 'assets/images/12-effortless-elegance-in-activewear.webp', alt: 'effortless elegance in activewear' },
   { src: 'assets/images/15-a-clean-studio-fashion-catalog-composite-image-o.webp', alt: 'clean studio fashion catalog composite' },
-  { src: 'assets/images/16-a-clean-commercial-catalog-lookbook-collage-imag.webp', alt: 'clean commercial catalog lookbook collage' },
-  { src: 'assets/images/18-choose-your-energy-modern-activewear-style.webp', alt: 'choose your energy modern activewear style' },
-  { src: 'assets/images/19-pure-form-minimalist-activewear-promo.webp', alt: 'pure form minimalist activewear promo' },
-  { src: 'assets/images/21-performance-meets-elegance-in-activewear.webp', alt: 'performance meets elegance in activewear' },
-  { src: 'assets/images/22-stylish-activewear-campaign-trio.webp', alt: 'stylish activewear campaign trio' },
-  { src: 'assets/images/23-sky-motion-athleisure-collection-promo.webp', alt: 'sky motion athleisure collection promo' },
-  { src: 'assets/images/24-blush-energy-athletic-elegance-in-pink.webp', alt: 'blush energy athletic elegance in pink' },
-  { src: 'assets/images/25-confident-elegance-in-coordinated-athleisure.webp', alt: 'confident elegance in coordinated athleisure' },
-  { src: 'assets/images/26-activewear-elegance-in-motion.webp', alt: 'activewear elegance in motion' },
-  { src: 'assets/images/27-confident-athleisure-style-with-nor-a.webp', alt: 'confident athleisure style with NORÉA' },
-  { src: 'assets/images/28-confident-activewear-fashion-in-neutral-tones.webp', alt: 'confident activewear fashion in neutral tones' },
-  { src: 'assets/images/29-modern-elegance-in-athleisure-fashion.webp', alt: 'modern elegance in athleisure fashion' }
+  { src: 'assets/images/16-a-clean-commercial-catalog-lookbook-collage-imag.webp', alt: 'clean commercial catalog lookbook collage' }
 ];
 
 const ORDER_PHONE = '263776678288';
-const money = (n) => 'USD ' + n.toFixed(2);
+const money = (n) => 'USD ' + Number(n || 0).toFixed(2);
 const optionText = (value) => Array.isArray(value) ? value.join(', ') : value;
 const $ = (q, el = document) => el.querySelector(q);
 const $$ = (q, el = document) => [...el.querySelectorAll(q)];
 const selectId = (productId, type) => `${type}-${productId}`;
 const colorPickerId = (productId, context = 'card') => `${context}-color-${productId}`;
+const imageId = (productId, context = 'card') => `${context}-image-${productId}`;
 
 let cart = JSON.parse(localStorage.getItem('noreaCart') || '[]');
 let currentFilter = 'All';
 let isCheckingOut = false;
+
+function normalizeProduct(product) {
+  const colors = Array.isArray(product.colors) && product.colors.length ? product.colors : COLOR_NAMES;
+  const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : AVAILABLE_SIZES;
+  return {
+    id: product.id,
+    name: product.name || 'NORÉA Product',
+    category: product.category || 'Sets',
+    price: Number(product.price || 0),
+    sizes,
+    colors,
+    tag: product.tag || 'New',
+    image: product.image || 'assets/images/02-move-beautifully-live-confidently.webp',
+    imagesByColor: product.imagesByColor || {},
+    description: product.description || 'Premium NORÉA activewear piece designed for confidence, movement and everyday elegance.',
+    active: product.active !== false
+  };
+}
+
+async function loadProducts() {
+  try {
+    const response = await fetch('/api/products?cache=' + Date.now());
+    if (!response.ok) throw new Error('Could not load products.');
+    const data = await response.json();
+    products = Array.isArray(data.products) ? data.products.map(normalizeProduct).filter(p => p.active) : [];
+  } catch (error) {
+    console.warn('Product load failed:', error);
+    products = [];
+  }
+  window.products = products;
+}
 
 function saveCart() {
   localStorage.setItem('noreaCart', JSON.stringify(cart));
@@ -202,6 +91,14 @@ function normalizeCart() {
   localStorage.setItem('noreaCart', JSON.stringify(cart));
 }
 
+function getColorMeta(colorName) {
+  return AVAILABLE_COLORS.find(color => color.name === colorName) || AVAILABLE_COLORS[0];
+}
+
+function getProductImage(product, colorName) {
+  return (product.imagesByColor && product.imagesByColor[colorName]) || product.image;
+}
+
 function getSelection(id, type) {
   const field = document.getElementById(selectId(id, type));
   return field ? field.value : '';
@@ -214,11 +111,21 @@ function getSelectedColor(id, context = 'card') {
 
 function selectColor(id, colorName, context = 'card') {
   const picker = document.getElementById(colorPickerId(id, context));
-  if (!picker) return;
+  const product = products.find(p => p.id === id);
+  if (!picker || !product) return;
+
   picker.dataset.selectedColor = colorName;
   $$('.swatch-option', picker).forEach(button => {
     button.classList.toggle('active', button.dataset.color === colorName);
   });
+
+  const image = document.getElementById(imageId(id, context));
+  if (image) {
+    image.classList.add('color-switching');
+    image.onload = () => image.classList.remove('color-switching');
+    image.onerror = () => image.classList.remove('color-switching');
+    image.src = getProductImage(product, colorName);
+  }
 }
 
 function scrollToShop() {
@@ -271,20 +178,31 @@ function renderOptionSelect(product, type) {
   `;
 }
 
-function renderColorPicker(product, context = 'card') {
+function renderColorPicker(product, context = 'card', selectedColor = product.colors[0]) {
   return `
-    <div class="color-picker" id="${colorPickerId(product.id, context)}" data-selected-color="${product.colors[0]}">
+    <div class="color-picker" id="${colorPickerId(product.id, context)}" data-selected-color="${selectedColor}">
       <span class="option-label">Color</span>
       <div class="swatch-list" role="list" aria-label="Choose color">
-        ${product.colors.map((colorName, index) => {
-          const color = AVAILABLE_COLORS.find(entry => entry.name === colorName);
+        ${product.colors.map(colorName => {
+          const color = getColorMeta(colorName);
           return `
-            <button type="button" class="swatch-option ${index === 0 ? 'active' : ''}" data-color="${colorName}" onclick="selectColor('${product.id}', '${colorName}', '${context}')" aria-label="${colorName}">
+            <button type="button" class="swatch-option ${colorName === selectedColor ? 'active' : ''}" data-color="${colorName}" onclick="selectColor('${product.id}', '${colorName}', '${context}')" aria-label="${colorName}">
               <span class="swatch-dot" style="--swatch:${color.hex}"></span>
-              <span>${color.emoji} ${colorName}</span>
+              <span>${colorName}</span>
             </button>`;
         }).join('')}
       </div>
+    </div>
+  `;
+}
+
+function renderEmptyStore() {
+  return `
+    <div class="empty-store reveal seen">
+      <p class="eyebrow">Coming soon</p>
+      <h3>NORÉA products are being added.</h3>
+      <p class="muted">The store is now controlled by admin uploads. New activewear pieces will appear here as soon as they are published.</p>
+      <a class="btn dark" href="/admin.html">Admin upload</a>
     </div>
   `;
 }
@@ -294,35 +212,43 @@ function renderProducts() {
   const filtered = currentFilter === 'All' ? products : products.filter(p => p.category === currentFilter);
   $('#productCount').textContent = `${filtered.length} ${filtered.length === 1 ? 'piece' : 'pieces'} shown`;
 
-  grid.innerHTML = filtered.map(p => `
-    <article class="product-card reveal">
-      <div class="product-image-wrap">
-        <img src="${p.image}" alt="${p.name}" loading="lazy" />
-        <span class="product-badge">${p.tag}</span>
-        <button class="quick-view" onclick="openQuickView('${p.id}')">Quick view</button>
-      </div>
-      <div class="product-copy">
-        <div>
-          <p class="eyebrow">${p.category}</p>
-          <h3>${p.name}</h3>
+  if (!filtered.length) {
+    grid.innerHTML = renderEmptyStore();
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const initialColor = p.colors[0];
+    return `
+      <article class="product-card reveal" data-product-id="${p.id}">
+        <div class="product-image-wrap">
+          <img id="${imageId(p.id, 'card')}" src="${getProductImage(p, initialColor)}" alt="${p.name}" loading="lazy" />
+          <span class="product-badge">${p.tag}</span>
+          <button class="quick-view" onclick="openQuickView('${p.id}')">Quick view</button>
         </div>
-        <strong>${money(p.price)}</strong>
-      </div>
-      <p class="muted small">Sizes: ${optionText(p.sizes)}</p>
-      <div class="product-options single">
-        ${renderOptionSelect(p, 'size')}
-      </div>
-      ${renderColorPicker(p, 'card')}
-      <button class="btn dark full" onclick="addToCart('${p.id}')">Add to bag</button>
-    </article>
-  `).join('');
+        <div class="product-copy">
+          <div>
+            <p class="eyebrow">${p.category}</p>
+            <h3>${p.name}</h3>
+          </div>
+          <strong>${money(p.price)}</strong>
+        </div>
+        <p class="muted small">Sizes: ${optionText(p.sizes)}</p>
+        <div class="product-options single">
+          ${renderOptionSelect(p, 'size')}
+        </div>
+        ${renderColorPicker(p, 'card', initialColor)}
+        <button class="btn dark full" onclick="addToCart('${p.id}')">Add to bag</button>
+      </article>
+    `;
+  }).join('');
   observeReveal();
 }
 
 function renderFilters() {
   const order = ['All', 'Sets', 'Jumpsuit', 'Shorts', 'Tops', 'Jackets', 'Lounge'];
   const available = new Set(products.map(p => p.category));
-  const cats = order.filter(cat => cat === 'All' || available.has(cat));
+  const cats = ['All', ...order.filter(cat => cat !== 'All' && available.has(cat)), ...[...available].filter(cat => !order.includes(cat))];
   $('#filters').innerHTML = cats.map(cat => `
     <button class="chip ${cat === currentFilter ? 'active' : ''}" onclick="setFilter('${cat}')">${cat}</button>
   `).join('');
@@ -360,10 +286,10 @@ function renderCart() {
     const p = products.find(prod => prod.id === item.id);
     if (!p) return '';
     total += p.price * item.qty;
-    const colorMeta = AVAILABLE_COLORS.find(color => color.name === item.color) || AVAILABLE_COLORS[0];
+    const colorMeta = getColorMeta(item.color);
     return `
       <div class="cart-row">
-        <img src="${p.image}" alt="${p.name}" />
+        <img src="${getProductImage(p, item.color)}" alt="${p.name}" />
         <div>
           <strong>${p.name}</strong>
           <p>${item.size} / <span class="inline-swatch" style="--swatch:${colorMeta.hex}"></span>${item.color}</p>
@@ -386,11 +312,13 @@ function closeCart() { document.body.classList.remove('cart-open'); }
 function openQuickView(id) {
   const p = products.find(prod => prod.id === id);
   if (!p) return;
+  const selectedColor = getSelectedColor(id, 'card') || p.colors[0];
+
   $('#modalContent').innerHTML = `
     <button class="modal-back" onclick="closeQuickView()" type="button">← Back to shop</button>
     <button class="modal-close" onclick="closeQuickView()" aria-label="Close quick view">×</button>
     <div class="modal-grid">
-      <div class="modal-image-wrap"><img src="${p.image}" alt="${p.name}" /></div>
+      <div class="modal-image-wrap"><img id="${imageId(p.id, 'modal')}" src="${getProductImage(p, selectedColor)}" alt="${p.name}" /></div>
       <div class="modal-copy">
         <p class="eyebrow">${p.category} • ${p.tag}</p>
         <h2>${p.name}</h2>
@@ -401,7 +329,7 @@ function openQuickView(id) {
             <select id="modal-size-${p.id}">${p.sizes.map(size => `<option value="${size}">${size}</option>`).join('')}</select>
           </label>
         </div>
-        ${renderColorPicker(p, 'modal')}
+        ${renderColorPicker(p, 'modal', selectedColor)}
         <p class="muted">Worldwide delivery in 10–15 business days. Secure online checkout in USD.</p>
         <strong class="modal-price">${money(p.price)}</strong>
         <div class="modal-actions">
@@ -476,8 +404,9 @@ function observeReveal() {
   els.forEach(el => observer.observe(el));
 }
 
-function init() {
+async function init() {
   showCheckoutStatus();
+  await loadProducts();
   normalizeCart();
   renderFilters();
   renderProducts();
