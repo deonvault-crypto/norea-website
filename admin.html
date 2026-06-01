@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NORÉA Admin — Color Images</title>
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root{--ink:#111;--paper:#f7f2eb;--line:rgba(17,17,17,.12);--soft:#5b5650;--white:#fff;--sand:#ded3c3;--shadow:0 20px 70px rgba(0,0,0,.12)}
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);line-height:1.5}.top{padding:2rem 1rem;text-align:center;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}.brand{letter-spacing:.45em;font-size:2.5rem;font-weight:300;margin-left:.45em}.wrap{max-width:980px;margin:0 auto;padding:2rem 1rem 5rem}.card{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:clamp(1rem,4vw,2rem);display:grid;gap:1rem}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.field{display:grid;gap:.45rem}.field span{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--soft)}input,select{width:100%;border:1px solid var(--line);border-radius:16px;background:#fff;padding:1rem;font:inherit}input[type=file]{padding:.8rem}.btn{border:1px solid var(--ink);border-radius:999px;background:var(--ink);color:#fff;padding:1rem 1.2rem;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;cursor:pointer}.btn.light{background:#fff;color:var(--ink)}.btn:disabled{opacity:.55;cursor:not-allowed}.preview{border:1px dashed var(--line);border-radius:18px;background:var(--paper);min-height:280px;display:grid;place-items:center;overflow:hidden}.preview img{max-width:100%;max-height:520px;display:block}.muted{color:var(--soft)}.status{padding:1rem;border-radius:16px;background:var(--paper);border:1px solid var(--line);white-space:pre-wrap}.swatches{display:flex;gap:.5rem;flex-wrap:wrap}.swatch{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--line);border-radius:999px;padding:.55rem .75rem;background:#fff}.dot{width:16px;height:16px;border-radius:50%;background:var(--c);border:1px solid rgba(0,0,0,.2)}.steps{display:grid;gap:.65rem;margin:0;padding-left:1.2rem;color:var(--soft)}@media(max-width:720px){.grid{grid-template-columns:1fr}.brand{font-size:1.6rem}.wrap{padding-top:1rem}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">NORÉA</div>
+    <p class="muted">Admin color image uploader</p>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <div>
+        <h1>Upload product color images</h1>
+        <p class="muted">Choose the product, choose the color, upload the correct product photo, then publish it. Customers will see that image when they tap that color.</p>
+      </div>
+
+      <div class="swatches" aria-label="NORÉA color options">
+        <span class="swatch"><span class="dot" style="--c:#111"></span>Black</span>
+        <span class="swatch"><span class="dot" style="--c:#f4aac7"></span>Pink</span>
+        <span class="swatch"><span class="dot" style="--c:#f6d75f"></span>Yellow</span>
+        <span class="swatch"><span class="dot" style="--c:#4f8edb"></span>Blue</span>
+        <span class="swatch"><span class="dot" style="--c:#5b3d32"></span>Brown</span>
+        <span class="swatch"><span class="dot" style="--c:#c73737"></span>Red</span>
+      </div>
+
+      <div class="grid">
+        <label class="field"><span>Admin password</span><input id="password" type="password" autocomplete="current-password" placeholder="Enter admin password" /></label>
+        <label class="field"><span>Product</span><select id="product"></select></label>
+        <label class="field"><span>Color</span><select id="color"></select></label>
+        <label class="field"><span>Image file</span><input id="file" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+      </div>
+
+      <div class="preview" id="preview"><span class="muted">Image preview will appear here</span></div>
+
+      <div class="grid">
+        <button class="btn" id="uploadBtn" type="button">Upload color image</button>
+        <a class="btn light" href="/" target="_blank" rel="noopener">Open store</a>
+      </div>
+
+      <div class="status" id="status">Ready.</div>
+
+      <div>
+        <h2>How to use</h2>
+        <ol class="steps">
+          <li>Select the product.</li>
+          <li>Select the color.</li>
+          <li>Upload the matching photo.</li>
+          <li>Click upload. The image will be saved as the exact file the store expects.</li>
+          <li>After Render redeploys, clients will automatically see it when they tap that color.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>
