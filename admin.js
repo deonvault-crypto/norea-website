@@ -1,6 +1,8 @@
 const COLORS = ['Black', 'Pink', 'Yellow', 'Blue', 'Brown', 'Red'];
+const COLOR_HEX = { Black: '#111111', Pink: '#f4aac7', Yellow: '#f6d75f', Blue: '#4f8edb', Brown: '#5b3d32', Red: '#c73737' };
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const $ = (query) => document.querySelector(query);
+const $$ = (query) => [...document.querySelectorAll(query)];
 let catalog = [];
 
 function setStatus(message) {
@@ -17,9 +19,9 @@ function slugify(value) {
     .slice(0, 60);
 }
 
-function parseList(value, fallback) {
-  const items = String(value || '').split(',').map(item => item.trim()).filter(Boolean);
-  return items.length ? items : fallback;
+function selectedCheckboxValues(name, fallback) {
+  const values = $$(`input[name="${name}"]:checked`).map(input => input.value);
+  return values.length ? values : fallback;
 }
 
 function productOptions() {
@@ -27,15 +29,37 @@ function productOptions() {
   return catalog.map(product => `<option value="${product.id}">${product.name}</option>`).join('');
 }
 
-function populateStaticSelects() {
-  $('#color').innerHTML = COLORS.map(color => `<option value="${color}">${color}</option>`).join('');
+function renderSizeChecks() {
+  $('#sizeChecks').innerHTML = SIZES.map(size => `
+    <label class="check-pill"><input type="checkbox" name="sizes" value="${size}" checked /> ${size}</label>
+  `).join('');
+}
+
+function renderColorChecks() {
+  $('#colorChecks').innerHTML = COLORS.map(color => `
+    <label class="check-pill"><input type="checkbox" name="colors" value="${color}" checked /> <span class="dot" style="--c:${COLOR_HEX[color]}"></span>${color}</label>
+  `).join('');
+}
+
+function renderBulkColorUploads() {
+  $('#bulkColorUploads').innerHTML = COLORS.map(color => `
+    <div class="bulk-color-card">
+      <div class="color-head"><span class="dot" style="--c:${COLOR_HEX[color]}"></span>${color}</div>
+      <input id="colorFile-${color}" type="file" accept="image/png,image/jpeg,image/webp" />
+      <div class="preview" id="preview-${color}"><span class="muted">${color} image preview</span></div>
+    </div>
+  `).join('');
+
+  COLORS.forEach(color => {
+    $(`#colorFile-${color}`).addEventListener('change', () => previewFile(`#colorFile-${color}`, `#preview-${color}`));
+  });
 }
 
 function populateProducts() {
   $('#product').innerHTML = productOptions();
   $('#deleteProduct').innerHTML = productOptions();
   $('#productList').innerHTML = catalog.length
-    ? catalog.map(product => `<div><strong>${product.name}</strong><br><span class="muted">${product.category} • USD ${Number(product.price).toFixed(2)} • ${product.colors.join(', ')}</span></div>`).join('')
+    ? catalog.map(product => `<div><strong>${product.name}</strong><br><span class="muted">${product.category} • USD ${Number(product.price).toFixed(2)} • Sizes: ${product.sizes.join(', ')} • Colors: ${product.colors.join(', ')}</span></div>`).join('')
     : '<p class="muted">No products yet. Add your first NORÉA product below.</p>';
 }
 
@@ -80,7 +104,7 @@ async function resizeToWebp(dataUrl) {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(img, 0, 0, width, height);
-  return canvas.toDataURL('image/webp', 0.9);
+  return canvas.toDataURL('image/webp', 0.88);
 }
 
 function previewFile(inputId, previewId) {
@@ -120,8 +144,8 @@ async function saveProduct() {
       category: $('#category').value.trim() || 'Sets',
       price: Number($('#price').value || 0),
       tag: $('#tag').value.trim() || 'New',
-      sizes: parseList($('#sizes').value, SIZES),
-      colors: parseList($('#colors').value, COLORS),
+      sizes: selectedCheckboxValues('sizes', SIZES),
+      colors: selectedCheckboxValues('colors', COLORS),
       description: $('#description').value.trim(),
       active: true
     };
@@ -141,8 +165,9 @@ async function saveProduct() {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Product save failed.');
 
-    setStatus(`Product saved successfully.\n\n${result.product.name}\n\nNow upload color images below, or open Render and wait for deploy.`);
+    setStatus(`Product saved successfully.\n\n${result.product.name}\nSizes saved: ${result.product.sizes.join(', ')}\n\nNow upload all color images below in one click.`);
     await loadCatalog();
+    $('#product').value = result.product.id;
   } catch (error) {
     setStatus(error.message);
   } finally {
@@ -150,38 +175,48 @@ async function saveProduct() {
   }
 }
 
-async function uploadImage() {
+async function collectColorImages() {
+  const imagesByColor = {};
+  for (const color of COLORS) {
+    const fileInput = $(`#colorFile-${color}`);
+    if (!fileInput || !fileInput.files[0]) continue;
+    if (!fileInput.files[0].type.startsWith('image/')) throw new Error(`${color} must be an image file.`);
+    setStatus(`Preparing ${color} image…`);
+    const dataUrl = await readAsDataUrl(fileInput.files[0]);
+    imagesByColor[color] = await resizeToWebp(dataUrl);
+  }
+  return imagesByColor;
+}
+
+async function uploadImages() {
   const password = $('#password').value.trim();
   const productId = $('#product').value;
-  const color = $('#color').value;
-  const file = $('#file').files[0];
 
   if (!password) return setStatus('Please enter the admin password.');
   if (!productId) return setStatus('Please add/select a product first.');
-  if (!file) return setStatus('Please choose a color image first.');
-  if (!file.type.startsWith('image/')) return setStatus('Please upload an image file.');
 
   $('#uploadBtn').disabled = true;
-  setStatus('Preparing color image…');
+  setStatus('Preparing color images…');
 
   try {
-    const dataUrl = await readAsDataUrl(file);
-    const webpDataUrl = await resizeToWebp(dataUrl);
+    const imagesByColor = await collectColorImages();
+    const colors = Object.keys(imagesByColor);
+    if (!colors.length) throw new Error('Choose at least one color image to upload.');
 
-    setStatus('Uploading color image…');
-    const response = await fetch('/api/admin/upload-color-image', {
+    setStatus(`Uploading ${colors.length} color image${colors.length === 1 ? '' : 's'}…`);
+    const response = await fetch('/api/admin/upload-color-images', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-admin-password': password
       },
-      body: JSON.stringify({ productId, color, imageData: webpDataUrl })
+      body: JSON.stringify({ productId, imagesByColor })
     });
 
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Upload failed.');
 
-    setStatus(`Uploaded successfully.\n\nSaved as:\n${result.path}\n\nAfter deploy, customers clicking ${color} on this product will see this image.`);
+    setStatus(`Uploaded successfully.\n\nColors uploaded: ${result.colors.join(', ')}\n\nAfter deploy, customers clicking those colors will see the matching images.`);
     await loadCatalog();
   } catch (error) {
     setStatus(error.message);
@@ -222,11 +257,12 @@ async function deleteProduct() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  populateStaticSelects();
+  renderSizeChecks();
+  renderColorChecks();
+  renderBulkColorUploads();
   loadCatalog().catch(error => setStatus(error.message));
   $('#mainImage').addEventListener('change', () => previewFile('#mainImage', '#mainPreview'));
-  $('#file').addEventListener('change', () => previewFile('#file', '#preview'));
   $('#saveProductBtn').addEventListener('click', saveProduct);
-  $('#uploadBtn').addEventListener('click', uploadImage);
+  $('#uploadBtn').addEventListener('click', uploadImages);
   $('#deleteProductBtn').addEventListener('click', deleteProduct);
 });
