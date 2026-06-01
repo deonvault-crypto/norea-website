@@ -17,7 +17,9 @@
     ],
     "tag": "New",
     "image": "assets/images/norea-black-shorts-set-main.webp",
-    "imagesByColor": {},
+    "imagesByColor": {
+      "Black": "assets/images/norea-black-shorts-set-black.webp"
+    },
     "description": "Noréa shorts and top set for activewear",
     "active": true
   }
