@@ -5,20 +5,22 @@ const Stripe = require('stripe');
 
 const PORT = process.env.PORT || 10000;
 const ROOT = __dirname;
+const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const AVAILABLE_COLORS = ['Black', 'Pink', 'Yellow', 'Blue', 'Brown', 'Red'];
 
 const PRODUCTS = {
-  'contour-black-jumpsuit': { name: 'NORÉA Eclipse Sculpt Jumpsuit', price: 72, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Black', 'Chocolate', 'Stone'] },
-  'grey-cutout-set': { name: 'NORÉA Aura Cutout Set', price: 58, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Grey', 'Black', 'Stone'] },
-  'black-cutout-set': { name: 'NORÉA Onyx Open-Back Set', price: 60, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Black', 'Mocha', 'Cream'] },
-  'khaki-soft-set': { name: 'NORÉA Drift Lounge Set', price: 64, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Khaki', 'Stone', 'Chocolate'] },
-  'purple-energy-set': { name: 'NORÉA Amethyst Flow Set', price: 54, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Amethyst', 'Blush', 'Black'] },
-  'pink-short-set': { name: 'NORÉA Blush Sprint Set', price: 46, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Blush Pink', 'Chocolate', 'Black'] },
-  'crop-tee-pack': { name: 'NORÉA Signature Crop Tee', price: 32, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['White', 'Black', 'Blush Pink'] },
-  'yellow-three-piece': { name: 'NORÉA Solace Three-Piece Set', price: 78, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Butter Yellow', 'Stone', 'Black'] },
-  'contour-jacket-collection': { name: 'NORÉA Tempo Zip Jacket', price: 48, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Black', 'Blush Pink', 'Stone'] },
-  'pink-brown-duo': { name: 'NORÉA Muse Zip Set', price: 62, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Blush Pink', 'Chocolate Brown'] },
-  'soft-power-collection': { name: 'NORÉA Soft Power Set', price: 56, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Cream', 'Mocha', 'Black'] },
-  'details-pack': { name: 'NORÉA Luxe Texture Set', price: 52, sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], colors: ['Ribbed Blush', 'Charcoal', 'Chocolate'] }
+  'contour-black-jumpsuit': { name: 'NORÉA Eclipse Sculpt Jumpsuit', price: 72, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'grey-cutout-set': { name: 'NORÉA Aura Cutout Set', price: 58, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'black-cutout-set': { name: 'NORÉA Onyx Open-Back Set', price: 60, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'khaki-soft-set': { name: 'NORÉA Drift Lounge Set', price: 64, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'purple-energy-set': { name: 'NORÉA Amethyst Flow Set', price: 54, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'pink-short-set': { name: 'NORÉA Blush Sprint Set', price: 46, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'crop-tee-pack': { name: 'NORÉA Signature Crop Tee', price: 32, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'yellow-three-piece': { name: 'NORÉA Solace Three-Piece Set', price: 78, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'contour-jacket-collection': { name: 'NORÉA Tempo Zip Jacket', price: 48, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'pink-brown-duo': { name: 'NORÉA Muse Zip Set', price: 62, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'soft-power-collection': { name: 'NORÉA Soft Power Set', price: 56, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
+  'details-pack': { name: 'NORÉA Luxe Texture Set', price: 52, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS }
 };
 
 const MIME_TYPES = {
@@ -94,7 +96,7 @@ function buildLineItems(items) {
         unit_amount: product.price * 100,
         product_data: {
           name: `${product.name} — ${size} / ${color}`,
-          description: `Size: ${size} • Color: ${color}`
+          description: `Size: ${size} • Color: ${color} • Estimated delivery: 10–15 business days`
         }
       }
     };
@@ -123,7 +125,7 @@ async function handleCheckout(req, res) {
       allow_promotion_codes: true,
       success_url: `${origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?checkout=cancelled`,
-      metadata: { brand: 'NORÉA', order_summary: orderSummary }
+      metadata: { brand: 'NORÉA', delivery_estimate: '10–15 business days', order_summary: orderSummary }
     });
 
     return sendJson(res, 200, { url: session.url });
