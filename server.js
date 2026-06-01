@@ -7,6 +7,8 @@ const PORT = process.env.PORT || 10000;
 const ROOT = __dirname;
 const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const AVAILABLE_COLORS = ['Black', 'Pink', 'Yellow', 'Blue', 'Brown', 'Red'];
+const GITHUB_REPO = process.env.GITHUB_REPO || 'deonvault-crypto/norea-website';
+const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 
 const PRODUCTS = {
   'contour-black-jumpsuit': { name: 'NORÉA Eclipse Sculpt Jumpsuit', price: 72, sizes: AVAILABLE_SIZES, colors: AVAILABLE_COLORS },
@@ -41,12 +43,12 @@ function sendJson(res, statusCode, body) {
   res.end(JSON.stringify(body));
 }
 
-function readJsonBody(req) {
+function readJsonBody(req, maxBytes = 1024 * 1024) {
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', chunk => {
       body += chunk;
-      if (body.length > 1024 * 1024) {
+      if (body.length > maxBytes) {
         req.destroy();
         reject(new Error('Request body is too large.'));
       }
@@ -55,7 +57,7 @@ function readJsonBody(req) {
       try {
         resolve(body ? JSON.parse(body) : {});
       } catch (error) {
-        reject(new Error('Invalid checkout request.'));
+        reject(new Error('Invalid request.'));
       }
     });
     req.on('error', reject);
@@ -72,6 +74,10 @@ function getShippingCountries() {
     .split(',')
     .map(country => country.trim().toUpperCase())
     .filter(Boolean);
+}
+
+function slugify(value) {
+  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 function buildLineItems(items) {
@@ -135,6 +141,74 @@ async function handleCheckout(req, res) {
   }
 }
 
+async function githubRequest(endpoint, options = {}) {
+  if (!process.env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN is not configured.');
+
+  const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}${endpoint}`, {
+    ...options,
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(options.headers || {})
+    }
+  });
+
+  if (response.status === 404) return null;
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'GitHub upload failed.');
+  return data;
+}
+
+async function handleAdminUpload(req, res) {
+  if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed.' });
+  if (!process.env.ADMIN_PASSWORD) return sendJson(res, 500, { error: 'ADMIN_PASSWORD is not configured.' });
+
+  const password = req.headers['x-admin-password'];
+  if (password !== process.env.ADMIN_PASSWORD) return sendJson(res, 401, { error: 'Wrong admin password.' });
+
+  try {
+    const body = await readJsonBody(req, 9 * 1024 * 1024);
+    const productId = String(body.productId || '').trim();
+    const color = String(body.color || '').trim();
+    const imageData = String(body.imageData || '');
+
+    if (!PRODUCTS[productId]) throw new Error('Invalid product selected.');
+    if (!AVAILABLE_COLORS.includes(color)) throw new Error('Invalid color selected.');
+
+    const match = imageData.match(/^data:image\/(webp|png|jpeg);base64,(.+)$/);
+    if (!match) throw new Error('Image must be a PNG, JPG, or WEBP file.');
+
+    const content = match[2];
+    const filePath = `assets/images/${productId}-${slugify(color)}.webp`;
+    const encodedPath = filePath.split('/').map(encodeURIComponent).join('/');
+    const existing = await githubRequest(`/contents/${encodedPath}?ref=${encodeURIComponent(GITHUB_BRANCH)}`);
+
+    const payload = {
+      message: `Upload ${color} image for ${PRODUCTS[productId].name}`,
+      content,
+      branch: GITHUB_BRANCH
+    };
+    if (existing && existing.sha) payload.sha = existing.sha;
+
+    const result = await githubRequest(`/contents/${encodedPath}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (process.env.RENDER_DEPLOY_HOOK_URL) {
+      fetch(process.env.RENDER_DEPLOY_HOOK_URL, { method: 'POST' }).catch(error => console.warn('Deploy hook failed:', error));
+    }
+
+    return sendJson(res, 200, { path: filePath, commit: result && result.commit && result.commit.sha });
+  } catch (error) {
+    console.error('Admin upload error:', error);
+    return sendJson(res, 400, { error: error.message || 'Unable to upload image.' });
+  }
+}
+
 function serveStatic(req, res) {
   const requestUrl = new URL(req.url, 'http://localhost');
   const pathname = requestUrl.pathname === '/' ? '/index.html' : requestUrl.pathname;
@@ -167,6 +241,10 @@ const server = http.createServer((req, res) => {
 
   if (requestUrl.pathname === '/api/create-checkout-session') {
     return handleCheckout(req, res);
+  }
+
+  if (requestUrl.pathname === '/api/admin/upload-color-image') {
+    return handleAdminUpload(req, res);
   }
 
   return serveStatic(req, res);
