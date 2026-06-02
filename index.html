@@ -7,6 +7,7 @@
   <meta name="description" content="Shop NORÉA premium activewear with secure USD checkout, sculpted fits, soft stretch and worldwide delivery in 10–15 business days." />
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="hero-video.css" />
 </head>
 <body>
   <div class="announcement">Secure USD checkout • Worldwide delivery • 10–15 business days</div>
@@ -35,8 +36,11 @@
           <a href="#lookbook" class="btn light">View lookbook</a>
         </div>
       </div>
-      <div class="hero-media reveal-hero">
-        <img src="assets/images/01-confident-stride-in-serene-surroundings.webp" alt="NORÉA activewear model" />
+      <div class="hero-media hero-video-media reveal-hero">
+        <img class="hero-video-fallback" src="assets/images/01-confident-stride-in-serene-surroundings.webp" alt="NORÉA activewear model" />
+        <video class="hero-video" autoplay muted loop playsinline preload="metadata" poster="assets/images/01-confident-stride-in-serene-surroundings.webp" aria-label="NORÉA activewear motion graphics hero video">
+          <source src="assets/videos/norea-hero.mp4" type="video/mp4" />
+        </video>
         <div class="hero-tag">Worldwide delivery • 10–15 business days</div>
       </div>
     </section>
@@ -122,7 +126,7 @@
   <footer class="footer">
     <p class="muted">© 2026 NORÉA. Premium activewear with worldwide delivery.</p>
     <a class="brand" href="#home">NORÉA</a>
-    <div class="footer-links"><a href="#shop">Shop</a><a href="#lookbook">Lookbook</a><a href="#contact">Support</a></div>
+    <div class="footer-links"><a href="#shop">Shop</a><a href="#lookbook">Lookbook</a><a href="#contact">Support</a><a href="shipping.html">Shipping</a><a href="returns.html">Returns</a><a href="size-guide.html">Size Guide</a></div>
   </footer>
 
   <div class="cart-overlay" id="cartOverlay"></div>
