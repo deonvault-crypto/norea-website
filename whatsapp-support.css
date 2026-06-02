@@ -2,4 +2,8 @@
 .whatsapp-btn:hover{background:#1ebe5d!important;border-color:#1ebe5d!important;box-shadow:0 16px 42px rgba(37,211,102,.34)}
 .whatsapp-icon{display:inline-grid;place-items:center;width:1.45rem;height:1.45rem;border-radius:50%;background:#fff;color:#25D366;font-size:.9rem;line-height:1}
 .contact-line{display:none!important}
-@media(max-width:620px){.whatsapp-btn{width:100%;max-width:none}.whatsapp-icon{width:1.35rem;height:1.35rem}}
+.gallery-item{display:flex!important;align-items:center!important;justify-content:center!important;background:#111!important}
+.gallery-item img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;background:#111!important}
+.gallery-item:hover img{transform:none!important}
+@media(min-width:961px){.gallery-item{min-height:420px}.gallery-item.wide{min-height:520px}}
+@media(max-width:620px){.whatsapp-btn{width:100%;max-width:none}.whatsapp-icon{width:1.35rem;height:1.35rem}.gallery-item{min-height:auto!important}.gallery-item img{height:auto!important}}
