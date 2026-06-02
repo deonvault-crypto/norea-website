@@ -1,0 +1,5 @@
+.whatsapp-btn{background:#25D366!important;border-color:#25D366!important;color:#fff!important;box-shadow:0 14px 34px rgba(37,211,102,.28)}
+.whatsapp-btn:hover{background:#1ebe5d!important;border-color:#1ebe5d!important;box-shadow:0 16px 42px rgba(37,211,102,.34)}
+.whatsapp-icon{display:inline-grid;place-items:center;width:1.45rem;height:1.45rem;border-radius:50%;background:#fff;color:#25D366;font-size:.9rem;line-height:1}
+.contact-line{display:none!important}
+@media(max-width:620px){.whatsapp-btn{width:100%;max-width:none}.whatsapp-icon{width:1.35rem;height:1.35rem}}
