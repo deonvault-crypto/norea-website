@@ -5,7 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!video || !soundBtn) return;
 
   const updateButton = () => {
-    soundBtn.textContent = video.muted ? 'Sound On' : 'Sound Off';
+    const soundIsOn = !video.muted;
+    soundBtn.textContent = soundIsOn ? 'Sound On' : 'Sound Off';
+    soundBtn.classList.toggle('sound-on', soundIsOn);
+    soundBtn.setAttribute('aria-pressed', String(soundIsOn));
+    soundBtn.setAttribute('aria-label', soundIsOn ? 'Turn hero video sound off' : 'Turn hero video sound on');
   };
 
   video.muted = true;
