@@ -2,10 +2,10 @@
 .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:1;background:#f7f2eb}
 .hero-video-media:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(17,17,17,.06),rgba(255,255,255,0));z-index:2;pointer-events:none}
 .hero-video-media .hero-tag{display:none!important}
-.hero-sound-btn{position:absolute;right:2rem;bottom:2rem;z-index:5;border:1px solid rgba(255,255,255,.32);background:rgba(17,17,17,.42);backdrop-filter:blur(18px);border-radius:999px;padding:.42rem .48rem .42rem .9rem;min-width:132px;height:48px;display:inline-flex;align-items:center;justify-content:space-between;gap:.65rem;text-transform:uppercase;letter-spacing:.12em;font-size:.66rem;cursor:pointer;color:#fff;box-shadow:0 16px 42px rgba(0,0,0,.18);white-space:nowrap;transition:.25s ease}
-.hero-sound-btn:after{content:"";width:34px;height:34px;border-radius:50%;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.22);transition:.25s ease;flex:0 0 auto}
-.hero-sound-btn.sound-on{background:rgba(255,255,255,.86);color:var(--ink);border-color:rgba(17,17,17,.1)}
-.hero-sound-btn.sound-on:after{background:#25D366;box-shadow:0 8px 24px rgba(37,211,102,.38)}
+.hero-sound-btn{position:absolute;right:2rem;bottom:2rem;z-index:5;border:1px solid rgba(255,255,255,.3);background:rgba(17,17,17,.46);backdrop-filter:blur(18px);border-radius:999px;width:148px;height:48px;display:block;text-align:left;text-transform:uppercase;letter-spacing:.1em;font-size:.58rem;font-weight:600;cursor:pointer;color:#fff;box-shadow:0 16px 42px rgba(0,0,0,.18);white-space:nowrap;transition:background .25s ease,color .25s ease,border-color .25s ease,transform .25s ease;padding:0 48px 0 16px;line-height:48px;overflow:hidden}
+.hero-sound-btn:after{content:"";position:absolute;top:5px;left:5px;width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.24);transition:transform .28s cubic-bezier(.2,.8,.2,1),background .25s ease;z-index:2}
+.hero-sound-btn.sound-on{background:rgba(255,255,255,.88);color:var(--ink);border-color:rgba(17,17,17,.1);padding:0 16px 0 48px;text-align:right}
+.hero-sound-btn.sound-on:after{background:#25D366;transform:translateX(100px);box-shadow:0 8px 24px rgba(37,211,102,.38)}
 .hero-sound-btn:hover{transform:translateY(-1px)}
-@media(max-width:720px){.hero-video-media{min-height:520px}.hero-sound-btn{right:1rem;bottom:1rem;min-width:122px;height:44px;font-size:.58rem;padding:.38rem .44rem .38rem .78rem;letter-spacing:.1em}.hero-sound-btn:after{width:30px;height:30px}}
-@media(max-width:390px){.hero-sound-btn{min-width:112px;height:42px;font-size:.54rem}.hero-sound-btn:after{width:28px;height:28px}}
+@media(max-width:720px){.hero-video-media{min-height:520px}.hero-sound-btn{right:1rem;bottom:1rem;width:132px;height:44px;line-height:44px;font-size:.52rem;padding:0 42px 0 14px}.hero-sound-btn:after{top:5px;left:5px;width:34px;height:34px}.hero-sound-btn.sound-on{padding:0 14px 0 42px}.hero-sound-btn.sound-on:after{transform:translateX(88px)}}
+@media(max-width:390px){.hero-sound-btn{width:124px;height:42px;line-height:42px;font-size:.5rem}.hero-sound-btn:after{width:32px;height:32px}.hero-sound-btn.sound-on:after{transform:translateX(82px)}}
