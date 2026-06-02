@@ -21,6 +21,8 @@ const MIME_TYPES = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  '.mp4': 'video/mp4',
+  '.mov': 'video/quicktime',
   '.ico': 'image/x-icon'
 };
 
@@ -393,15 +395,44 @@ function serveStatic(req, res) {
     return res.end('Forbidden');
   }
 
-  fs.readFile(filePath, (error, data) => {
-    if (error) {
+  fs.stat(filePath, (statError, stat) => {
+    if (statError || !stat.isFile()) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       return res.end('Not found');
     }
 
-    const contentType = MIME_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': contentType });
-    res.end(data);
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    const isVideo = contentType.startsWith('video/');
+
+    if (isVideo && req.headers.range) {
+      const range = req.headers.range;
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = Number.parseInt(parts[0], 10);
+      const end = parts[1] ? Number.parseInt(parts[1], 10) : stat.size - 1;
+
+      if (Number.isNaN(start) || Number.isNaN(end) || start >= stat.size || end >= stat.size) {
+        res.writeHead(416, { 'Content-Range': `bytes */${stat.size}` });
+        return res.end();
+      }
+
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': end - start + 1,
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=31536000, immutable'
+      });
+      return fs.createReadStream(filePath, { start, end }).pipe(res);
+    }
+
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Content-Length': stat.size,
+      'Accept-Ranges': isVideo ? 'bytes' : 'none',
+      'Cache-Control': isVideo ? 'public, max-age=31536000, immutable' : 'no-cache'
+    });
+    fs.createReadStream(filePath).pipe(res);
   });
 }
 
