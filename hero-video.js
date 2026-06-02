@@ -60,3 +60,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const storageKey = 'noreaCookieChoice';
+  if (localStorage.getItem(storageKey)) return;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    .cookie-banner{position:fixed;left:1rem;right:1rem;bottom:1rem;z-index:9999;display:flex;align-items:center;justify-content:space-between;gap:1rem;max-width:980px;margin:0 auto;padding:1rem 1rem 1rem 1.1rem;border:1px solid rgba(17,17,17,.12);border-radius:22px;background:rgba(255,255,255,.92);backdrop-filter:blur(18px);box-shadow:0 24px 80px rgba(0,0,0,.18);color:#111;animation:cookieIn .35s ease both}
+    .cookie-banner p{margin:0;color:#54504a;font-size:.9rem;line-height:1.45}.cookie-banner strong{display:block;color:#111;text-transform:uppercase;letter-spacing:.16em;font-size:.7rem;margin-bottom:.2rem}.cookie-actions{display:flex;gap:.55rem;flex-shrink:0}.cookie-btn{border:1px solid rgba(17,17,17,.18);border-radius:999px;padding:.75rem 1rem;background:#fff;cursor:pointer;text-transform:uppercase;letter-spacing:.11em;font-size:.7rem;color:#111}.cookie-btn.accept{background:#111;color:#fff;border-color:#111}.cookie-btn:hover{transform:translateY(-1px)}@keyframes cookieIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}@media(max-width:620px){.cookie-banner{display:grid;bottom:.75rem;left:.75rem;right:.75rem;padding:.95rem}.cookie-actions{display:grid;grid-template-columns:1fr 1fr}.cookie-btn{width:100%;padding:.72rem .8rem}}
+  `;
+  document.head.appendChild(style);
+
+  const banner = document.createElement('div');
+  banner.className = 'cookie-banner';
+  banner.innerHTML = `
+    <p><strong>Cookie notice</strong> NORÉA uses essential cookies to keep your bag, checkout and site experience working smoothly.</p>
+    <div class="cookie-actions">
+      <button class="cookie-btn decline" type="button">Decline</button>
+      <button class="cookie-btn accept" type="button">Accept</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+
+  const saveChoice = (choice) => {
+    localStorage.setItem(storageKey, choice);
+    banner.remove();
+  };
+
+  banner.querySelector('.accept').addEventListener('click', () => saveChoice('accepted'));
+  banner.querySelector('.decline').addEventListener('click', () => saveChoice('declined'));
+});
