@@ -1,31 +1,5 @@
 [
   {
-    "id": "norea-black-shorts-set",
-    "name": "Noréa black shorts set",
-    "category": "Sets",
-    "price": 40,
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "colors": [
-      "Black",
-      "Brown"
-    ],
-    "tag": "New",
-    "image": "assets/images/norea-black-shorts-set-main.webp",
-    "imagesByColor": {
-      "Black": "assets/images/norea-black-shorts-set-black.webp",
-      "Brown": "assets/images/norea-black-shorts-set-brown.webp"
-    },
-    "description": "Noréa shorts and top set for activewear",
-    "active": true
-  },
-  {
     "id": "norea-sculpt-short-set",
     "name": "NORÉA Sculpt Short Set",
     "category": "Sets",
