@@ -18,5 +18,27 @@
     "imagesByColor": {},
     "description": "The NORÉA Essentials Crew Socks 3-Pack is designed for everyday comfort, training, and clean lifestyle styling.\n\nMade with a soft ribbed stretch-knit feel, these premium unisex crew socks are perfect for both women and men. The set includes three timeless colors — Cream, White, and Black — with subtle NORÉA branding for a minimal luxury look.\n\nDesigned to pair effortlessly with sneakers, gym fits, activewear, loungewear, and everyday outfits.",
     "active": true
+  },
+  {
+    "id": "norea-sculpt-zip-set",
+    "name": "NORÉA Sculpt Zip Set",
+    "category": "Sets",
+    "price": 50,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      "Black"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-sculpt-zip-set-main.webp",
+    "imagesByColor": {},
+    "description": "Sculpting long sleeve zip front one piece set with smooth compression fabric, contour piping, and an elevated off duty look. Designed for a flattering fit, everyday confidence, and studio to street styling.",
+    "active": true
   }
 ]
