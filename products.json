@@ -64,5 +64,27 @@
     "imagesByColor": {},
     "description": "Contoured two-piece active set with a sculpting crop top, flattering crossover waistband, and sleek everyday support. Made for confident movement, soft compression, and elevated off-duty styling.",
     "active": true
+  },
+  {
+    "id": "norea-essentials-crew-socks",
+    "name": "NORÉA Essentials Crew Socks",
+    "category": "Socks",
+    "price": 1,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      "Black"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-essentials-crew-socks-main.webp",
+    "imagesByColor": {},
+    "description": "Made with a soft ribbed stretch knit feel, these premium unisex crew socks are perfect for both women and men. The set includes three timeless colors Cream, White, and Black  with subtle NORÉA branding for a minimal luxury look.",
+    "active": true
   }
 ]
