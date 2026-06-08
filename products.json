@@ -64,5 +64,27 @@
     "imagesByColor": {},
     "description": "Made with a soft ribbed stretch knit feel, these premium unisex crew socks are perfect for both women and men. The set includes three timeless colors Cream, White, and Black  with subtle NORÉA branding for a minimal luxury look.",
     "active": true
+  },
+  {
+    "id": "norea-cocoa-set",
+    "name": "NORÉA Cocoa Set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      "Brown"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-cocoa-set-main.webp",
+    "imagesByColor": {},
+    "description": "Minimal short sleeve pocket set in a rich cocoa tone with a smooth sculpting fit and versatile everyday comfort. Clean, refined, and designed for effortless movement from studio to street.",
+    "active": true
   }
 ]
