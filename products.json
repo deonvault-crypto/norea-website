@@ -106,5 +106,23 @@
     "image": "assets/images/norea-sculpt-cutout-set-main.webp",
     "description": "Elevate your workout with the NORÉA Sculpt Cutout Set. Designed with a flattering sculpting fit, breathable performance fabric, and an elegant open-back design. Perfect for gym sessions, pilates, yoga, and everyday activewear. Features 4-way stretch, shape retention, and squat-proof confidence.",
     "active": true
+  },
+  {
+    "id": "norea-midnight-sculpt-set",
+    "name": "NORÉA Midnight Sculpt Set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-midnight-sculpt-set-main.webp",
+    "description": "A timeless all-black activewear essential. The Midnight Sculpt Set combines luxury performance fabric with a sleek cutout silhouette and open-back detailing. Designed to move with your body while providing maximum comfort and confidence.",
+    "active": true
   }
 ]
