@@ -7,7 +7,7 @@
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
   <style>
     :root{--ink:#111;--paper:#f7f2eb;--line:rgba(17,17,17,.12);--soft:#5b5650;--white:#fff;--sand:#ded3c3;--shadow:0 20px 70px rgba(0,0,0,.12)}
-    *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);line-height:1.5}.top{padding:2rem 1rem;text-align:center;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}.brand{letter-spacing:.45em;font-size:2.5rem;font-weight:300;margin-left:.45em}.wrap{max-width:1040px;margin:0 auto;padding:2rem 1rem 5rem;display:grid;gap:1.2rem}.card{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:clamp(1rem,4vw,2rem);display:grid;gap:1rem}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.field{display:grid;gap:.45rem}.field span,.mini-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--soft)}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:16px;background:#fff;padding:1rem;font:inherit}textarea{min-height:130px;resize:vertical}input[type=file]{padding:.8rem}.btn{border:1px solid var(--ink);border-radius:999px;background:var(--ink);color:#fff;padding:1rem 1.2rem;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;cursor:pointer;text-align:center}.btn.light{background:#fff;color:var(--ink)}.btn.danger{background:#641919;border-color:#641919}.btn:disabled{opacity:.55;cursor:not-allowed}.preview{border:1px dashed var(--line);border-radius:18px;background:var(--paper);min-height:220px;display:grid;place-items:center;overflow:hidden}.preview img{max-width:100%;max-height:420px;display:block}.muted{color:var(--soft)}.status{padding:1rem;border-radius:16px;background:var(--paper);border:1px solid var(--line);white-space:pre-wrap}.swatches,.check-grid,.bulk-grid{display:flex;gap:.5rem;flex-wrap:wrap}.swatch,.check-pill{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--line);border-radius:999px;padding:.65rem .85rem;background:#fff;cursor:pointer}.check-pill input{width:auto}.dot{width:16px;height:16px;border-radius:50%;background:var(--c);border:1px solid rgba(0,0,0,.2)}.steps{display:grid;gap:.65rem;margin:0;padding-left:1.2rem;color:var(--soft)}.product-list{display:grid;gap:.8rem;border:1px solid var(--line);border-radius:18px;padding:1rem;background:var(--paper)}.section-title{margin-bottom:.2rem}.bulk-color-card{border:1px solid var(--line);border-radius:18px;padding:1rem;background:#fff;display:grid;gap:.7rem;min-width:min(100%,300px);flex:1}.bulk-color-card .preview{min-height:150px}.color-head{display:flex;align-items:center;gap:.5rem;font-weight:700}@media(max-width:720px){.grid{grid-template-columns:1fr}.brand{font-size:1.6rem}.wrap{padding-top:1rem}.bulk-color-card{min-width:100%}}
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink);line-height:1.5}.top{padding:2rem 1rem;text-align:center;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}.brand{letter-spacing:.45em;font-size:2.5rem;font-weight:300;margin-left:.45em}.wrap{max-width:1040px;margin:0 auto;padding:2rem 1rem 5rem;display:grid;gap:1.2rem}.card{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:clamp(1rem,4vw,2rem);display:grid;gap:1rem}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.field{display:grid;gap:.45rem}.field span,.mini-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--soft)}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:16px;background:#fff;padding:1rem;font:inherit}textarea{min-height:130px;resize:vertical}input[type=file]{padding:.8rem}.btn{border:1px solid var(--ink);border-radius:999px;background:var(--ink);color:#fff;padding:1rem 1.2rem;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;cursor:pointer;text-align:center}.btn.light{background:#fff;color:var(--ink)}.btn.danger{background:#641919;border-color:#641919}.btn:disabled{opacity:.55;cursor:not-allowed}.preview{border:1px dashed var(--line);border-radius:18px;background:var(--paper);min-height:220px;display:grid;place-items:center;overflow:hidden}.preview img{max-width:100%;max-height:420px;display:block}.muted{color:var(--soft)}.status{padding:1rem;border-radius:16px;background:var(--paper);border:1px solid var(--line);white-space:pre-wrap}.check-grid{display:flex;gap:.5rem;flex-wrap:wrap}.check-pill{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--line);border-radius:999px;padding:.65rem .85rem;background:#fff;cursor:pointer}.check-pill input{width:auto}.steps{display:grid;gap:.65rem;margin:0;padding-left:1.2rem;color:var(--soft)}.product-list{display:grid;gap:.8rem;border:1px solid var(--line);border-radius:18px;padding:1rem;background:var(--paper)}.section-title{margin-bottom:.2rem}@media(max-width:720px){.grid{grid-template-columns:1fr}.brand{font-size:1.6rem}.wrap{padding-top:1rem}}
   </style>
 </head>
 <body>
@@ -49,26 +49,10 @@
         <div class="check-grid" id="sizeChecks"></div>
       </div>
 
-      <div>
-        <div class="mini-title">Available colors</div>
-        <div class="check-grid" id="colorChecks"></div>
-      </div>
-
       <label class="field"><span>Description</span><textarea id="description" placeholder="Describe the fit, fabric, style and feel…"></textarea></label>
       <label class="field"><span>Main product image</span><input id="mainImage" type="file" accept="image/png,image/jpeg,image/webp" /></label>
       <div class="preview" id="mainPreview"><span class="muted">Main product image preview will appear here</span></div>
       <button class="btn" id="saveProductBtn" type="button">Save product</button>
-    </section>
-
-    <section class="card">
-      <div>
-        <h2>Upload all color images at once</h2>
-        <p class="muted">Select a product, then upload whichever color images you have. You can upload Black, Pink, Yellow, Blue, Brown and Red together in one click.</p>
-      </div>
-
-      <label class="field"><span>Product</span><select id="product"></select></label>
-      <div class="bulk-grid" id="bulkColorUploads"></div>
-      <button class="btn" id="uploadBtn" type="button">Upload selected color images</button>
     </section>
 
     <section class="card">
@@ -88,8 +72,8 @@
         <h2>How to use</h2>
         <ol class="steps">
           <li>Add a product once and tick every size available.</li>
-          <li>Upload all product color images together.</li>
-          <li>Render redeploys. After deploy, customers choose size and color normally.</li>
+          <li>Upload one clean main product image.</li>
+          <li>Render redeploys. After deploy, customers choose size only.</li>
         </ol>
       </div>
     </section>
