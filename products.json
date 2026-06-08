@@ -12,12 +12,8 @@
       "XL",
       "XXL"
     ],
-    "colors": [
-      "Black"
-    ],
     "tag": "New",
     "image": "assets/images/norea-sculpt-zip-set-main.webp",
-    "imagesByColor": {},
     "description": "Sculpting long sleeve zip front one piece set with smooth compression fabric, contour piping, and an elevated off duty look. Designed for a flattering fit, everyday confidence, and studio to street styling.",
     "active": true
   },
@@ -34,12 +30,8 @@
       "XL",
       "XXL"
     ],
-    "colors": [
-      "Black"
-    ],
     "tag": "New",
     "image": "assets/images/norea-curve-contour-set-main.webp",
-    "imagesByColor": {},
     "description": "Contoured two-piece active set with a sculpting crop top, flattering crossover waistband, and sleek everyday support. Made for confident movement, soft compression, and elevated off-duty styling.",
     "active": true
   },
@@ -56,12 +48,8 @@
       "XL",
       "XXL"
     ],
-    "colors": [
-      "Black"
-    ],
     "tag": "New",
     "image": "assets/images/norea-essentials-crew-socks-main.webp",
-    "imagesByColor": {},
     "description": "Made with a soft ribbed stretch knit feel, these premium unisex crew socks are perfect for both women and men. The set includes three timeless colors Cream, White, and Black  with subtle NORÉA branding for a minimal luxury look.",
     "active": true
   },
@@ -78,13 +66,27 @@
       "XL",
       "XXL"
     ],
-    "colors": [
-      "Brown"
-    ],
     "tag": "New",
     "image": "assets/images/norea-cocoa-set-main.webp",
-    "imagesByColor": {},
     "description": "Minimal short sleeve pocket set in a rich cocoa tone with a smooth sculpting fit and versatile everyday comfort. Clean, refined, and designed for effortless movement from studio to street.",
+    "active": true
+  },
+  {
+    "id": "norea-core-short-set",
+    "name": "NORÉA Core Short Set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-core-short-set-main.webp",
+    "description": "A clean everyday short set with a body hugging fit, smooth support, and timeless simplicity. Built for movement, comfort, and a confident minimal look that works all day.",
     "active": true
   }
 ]
