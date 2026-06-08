@@ -124,5 +124,23 @@
     "image": "assets/images/norea-midnight-sculpt-set-main.webp",
     "description": "A timeless all-black activewear essential. The Midnight Sculpt Set combines luxury performance fabric with a sleek cutout silhouette and open-back detailing. Designed to move with your body while providing maximum comfort and confidence.",
     "active": true
+  },
+  {
+    "id": "norea-butter-luxe-set",
+    "name": "NORÉA Butter Luxe Set",
+    "category": "Sets",
+    "price": 45,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-butter-luxe-set-main.webp",
+    "description": "Soft, feminine, and effortlessly stylish. The Butter Luxe Set includes a cropped zip jacket, supportive sports bra, and sculpting leggings. Made from buttery-soft fabric with breathable comfort and a premium fit for both workouts and daily wear.",
+    "active": true
   }
 ]
