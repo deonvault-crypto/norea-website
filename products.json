@@ -36,24 +36,6 @@
     "active": true
   },
   {
-    "id": "norea-essentials-crew-socks",
-    "name": "NORÉA Essentials Crew Socks",
-    "category": "Socks",
-    "price": 1,
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "tag": "New",
-    "image": "assets/images/norea-essentials-crew-socks-main.webp",
-    "description": "Made with a soft ribbed stretch knit feel, these premium unisex crew socks are perfect for both women and men. The set includes three timeless colors Cream, White, and Black  with subtle NORÉA branding for a minimal luxury look.",
-    "active": true
-  },
-  {
     "id": "norea-cocoa-set",
     "name": "NORÉA Cocoa Set",
     "category": "Sets",
