@@ -64,5 +64,27 @@
     "imagesByColor": {},
     "description": "Made with a soft ribbed stretch knit feel, these premium unisex crew socks are perfect for both women and men. The set includes three timeless colors Cream, White, and Black  with subtle NORÉA branding for a minimal luxury look.",
     "active": true
+  },
+  {
+    "id": "norea-elevate-short-set",
+    "name": "NORÉA elevate short set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      "Red"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-elevate-short-set-main.webp",
+    "imagesByColor": {},
+    "description": "A sleek fitted short set with a smooth second skin feel, soft stretch fabric, and a sculpted silhouette. Designed for light training, daily movement, and a polished feminine finish.",
+    "active": true
   }
 ]
