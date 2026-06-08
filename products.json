@@ -88,5 +88,23 @@
     "image": "assets/images/norea-core-short-set-main.webp",
     "description": "A clean everyday short set with a body hugging fit, smooth support, and timeless simplicity. Built for movement, comfort, and a confident minimal look that works all day.",
     "active": true
+  },
+  {
+    "id": "norea-sculpt-cutout-set",
+    "name": "NORÉA Sculpt Cutout Set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-sculpt-cutout-set-main.webp",
+    "description": "Elevate your workout with the NORÉA Sculpt Cutout Set. Designed with a flattering sculpting fit, breathable performance fabric, and an elegant open-back design. Perfect for gym sessions, pilates, yoga, and everyday activewear. Features 4-way stretch, shape retention, and squat-proof confidence.",
+    "active": true
   }
 ]
