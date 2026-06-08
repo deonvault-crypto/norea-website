@@ -142,5 +142,23 @@
     "image": "assets/images/norea-butter-luxe-set-main.webp",
     "description": "Soft, feminine, and effortlessly stylish. The Butter Luxe Set includes a cropped zip jacket, supportive sports bra, and sculpting leggings. Made from buttery-soft fabric with breathable comfort and a premium fit for both workouts and daily wear.",
     "active": true
+  },
+  {
+    "id": "norea-pink-sculpt-shorts-set",
+    "name": "NORÉA Pink Sculpt Shorts Set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-pink-sculpt-shorts-set-main.webp",
+    "description": "The ultimate blend of style and performance. Featuring a fitted ribbed zip jacket and matching sculpt shorts, this set offers a flattering silhouette, breathable fabric, and all-day comfort. Perfect for gym sessions, walks, and lifestyle wear.",
+    "active": true
   }
 ]
