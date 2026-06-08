@@ -7,7 +7,6 @@ const PORT = process.env.PORT || 10000;
 const ROOT = __dirname;
 const CATALOG_PATH = 'products.json';
 const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-const AVAILABLE_COLORS = ['Black', 'Pink', 'Yellow', 'Blue', 'Brown', 'Red'];
 const GITHUB_REPO = process.env.GITHUB_REPO || 'deonvault-crypto/norea-website';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 
@@ -88,10 +87,8 @@ function normalizeProduct(product) {
     category: String(product.category || 'Sets').trim(),
     price: Number(product.price || 0),
     sizes: safeArray(product.sizes, AVAILABLE_SIZES),
-    colors: safeArray(product.colors, AVAILABLE_COLORS),
     tag: String(product.tag || 'New').trim(),
     image: String(product.image || 'assets/images/02-move-beautifully-live-confidently.webp').trim(),
-    imagesByColor: product.imagesByColor && typeof product.imagesByColor === 'object' ? product.imagesByColor : {},
     description: String(product.description || 'Premium NORÉA activewear piece designed for confidence, movement and everyday elegance.').trim(),
     active: product.active !== false
   };
@@ -121,11 +118,9 @@ async function buildLineItems(items) {
 
     const quantity = Number.parseInt(item.qty, 10);
     const size = String(item.size || '').trim();
-    const color = String(item.color || '').trim();
 
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) throw new Error('Invalid quantity selected.');
     if (!product.sizes.includes(size)) throw new Error(`Invalid size for ${product.name}.`);
-    if (!product.colors.includes(color)) throw new Error(`Invalid color for ${product.name}.`);
 
     return {
       quantity,
@@ -133,8 +128,8 @@ async function buildLineItems(items) {
         currency: 'usd',
         unit_amount: Math.round(product.price * 100),
         product_data: {
-          name: `${product.name} — ${size} / ${color}`,
-          description: `Size: ${size} • Color: ${color} • Estimated delivery: 10–15 business days`
+          name: `${product.name} — ${size}`,
+          description: `Size: ${size} • Estimated delivery: 10–15 business days`
         }
       }
     };
@@ -156,7 +151,7 @@ async function handleCheckout(req, res) {
     const body = await readJsonBody(req);
     const items = body.items || [];
     const lineItems = await buildLineItems(items);
-    const orderSummary = items.map(item => `${item.qty}x ${item.id} (${item.size}/${item.color})`).join('; ').slice(0, 500);
+    const orderSummary = items.map(item => `${item.qty}x ${item.id} (${item.size})`).join('; ').slice(0, 500);
     const origin = getOrigin(req);
 
     const session = await stripe.checkout.sessions.create({
@@ -314,76 +309,6 @@ async function handleAdminDeleteProduct(req, res) {
   }
 }
 
-async function uploadColorImageToCatalog(product, color, imageData) {
-  if (!AVAILABLE_COLORS.includes(color)) throw new Error(`Invalid color selected: ${color}.`);
-
-  const filePath = `assets/images/${product.id}-${slugify(color)}.webp`;
-  await uploadImageFile(filePath, imageData, `Upload ${color} image for ${product.name}`);
-
-  product.imagesByColor = product.imagesByColor || {};
-  product.imagesByColor[color] = filePath;
-  if (!product.colors.includes(color)) product.colors.push(color);
-
-  return filePath;
-}
-
-async function handleAdminUpload(req, res) {
-  if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed.' });
-
-  try {
-    checkAdmin(req);
-    const body = await readJsonBody(req, 12 * 1024 * 1024);
-    const productId = slugify(body.productId);
-    const color = String(body.color || '').trim();
-    const imageData = String(body.imageData || '');
-
-    const catalog = await loadGitHubCatalog();
-    const product = catalog.products.find(p => p.id === productId);
-    if (!product) throw new Error('Product not found. Add the product first.');
-
-    const filePath = await uploadColorImageToCatalog(product, color, imageData);
-    await saveGitHubCatalog(catalog.products, catalog.sha, `Link ${color} image for ${product.name}`);
-    await triggerDeploy();
-
-    return sendJson(res, 200, { path: filePath, product });
-  } catch (error) {
-    console.error('Admin upload error:', error);
-    return sendJson(res, error.status || 400, { error: error.message || 'Unable to upload image.' });
-  }
-}
-
-async function handleAdminBulkUpload(req, res) {
-  if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed.' });
-
-  try {
-    checkAdmin(req);
-    const body = await readJsonBody(req, 42 * 1024 * 1024);
-    const productId = slugify(body.productId);
-    const imagesByColor = body.imagesByColor && typeof body.imagesByColor === 'object' ? body.imagesByColor : {};
-    const colors = Object.keys(imagesByColor).filter(color => imagesByColor[color]);
-
-    if (!colors.length) throw new Error('Choose at least one color image to upload.');
-
-    const catalog = await loadGitHubCatalog();
-    const product = catalog.products.find(p => p.id === productId);
-    if (!product) throw new Error('Product not found. Add the product first.');
-
-    const uploaded = [];
-    for (const color of colors) {
-      const filePath = await uploadColorImageToCatalog(product, color, imagesByColor[color]);
-      uploaded.push({ color, path: filePath });
-    }
-
-    await saveGitHubCatalog(catalog.products, catalog.sha, `Upload ${uploaded.length} color images for ${product.name}`);
-    await triggerDeploy();
-
-    return sendJson(res, 200, { colors: uploaded.map(item => item.color), uploaded, product });
-  } catch (error) {
-    console.error('Admin bulk upload error:', error);
-    return sendJson(res, error.status || 400, { error: error.message || 'Unable to upload images.' });
-  }
-}
-
 function serveStatic(req, res) {
   const requestUrl = new URL(req.url, 'http://localhost');
   const pathname = requestUrl.pathname === '/' ? '/index.html' : requestUrl.pathname;
@@ -457,14 +382,6 @@ const server = http.createServer((req, res) => {
 
   if (requestUrl.pathname === '/api/admin/delete-product') {
     return handleAdminDeleteProduct(req, res);
-  }
-
-  if (requestUrl.pathname === '/api/admin/upload-color-image') {
-    return handleAdminUpload(req, res);
-  }
-
-  if (requestUrl.pathname === '/api/admin/upload-color-images') {
-    return handleAdminBulkUpload(req, res);
   }
 
   return serveStatic(req, res);
