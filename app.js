@@ -1,13 +1,4 @@
 const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-const AVAILABLE_COLORS = [
-  { name: 'Black', hex: '#111111' },
-  { name: 'Pink', hex: '#f4aac7' },
-  { name: 'Yellow', hex: '#f6d75f' },
-  { name: 'Blue', hex: '#4f8edb' },
-  { name: 'Brown', hex: '#5b3d32' },
-  { name: 'Red', hex: '#c73737' }
-];
-const COLOR_NAMES = AVAILABLE_COLORS.map(color => color.name);
 
 let products = [];
 window.products = products;
@@ -28,7 +19,6 @@ const optionText = (value) => Array.isArray(value) ? value.join(', ') : value;
 const $ = (q, el = document) => el.querySelector(q);
 const $$ = (q, el = document) => [...el.querySelectorAll(q)];
 const selectId = (productId, type) => `${type}-${productId}`;
-const colorPickerId = (productId, context = 'card') => `${context}-color-${productId}`;
 const imageId = (productId, context = 'card') => `${context}-image-${productId}`;
 
 let cart = JSON.parse(localStorage.getItem('noreaCart') || '[]');
@@ -36,7 +26,6 @@ let currentFilter = 'All';
 let isCheckingOut = false;
 
 function normalizeProduct(product) {
-  const colors = Array.isArray(product.colors) && product.colors.length ? product.colors : COLOR_NAMES;
   const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : AVAILABLE_SIZES;
   return {
     id: product.id,
@@ -44,10 +33,8 @@ function normalizeProduct(product) {
     category: product.category || 'Sets',
     price: Number(product.price || 0),
     sizes,
-    colors,
     tag: product.tag || 'New',
     image: product.image || 'assets/images/02-move-beautifully-live-confidently.webp',
-    imagesByColor: product.imagesByColor || {},
     description: product.description || 'Premium NORÉA activewear piece designed for confidence, movement and everyday elegance.',
     active: product.active !== false
   };
@@ -78,54 +65,25 @@ function normalizeCart() {
     if (!product) return;
 
     const size = product.sizes.includes(item.size) ? item.size : product.sizes[0];
-    const color = product.colors.includes(item.color) ? item.color : product.colors[0];
     const qty = Number.parseInt(item.qty, 10);
     if (!Number.isInteger(qty) || qty < 1) return;
 
-    const key = `${item.id}|${size}|${color}`;
+    const key = `${item.id}|${size}`;
     const existing = normalized.find(row => row.key === key);
     if (existing) existing.qty += qty;
-    else normalized.push({ key, id: item.id, qty, size, color });
+    else normalized.push({ key, id: item.id, qty, size });
   });
   cart = normalized;
   localStorage.setItem('noreaCart', JSON.stringify(cart));
 }
 
-function getColorMeta(colorName) {
-  return AVAILABLE_COLORS.find(color => color.name === colorName) || AVAILABLE_COLORS[0];
-}
-
-function getProductImage(product, colorName) {
-  return (product.imagesByColor && product.imagesByColor[colorName]) || product.image;
+function getProductImage(product) {
+  return product.image;
 }
 
 function getSelection(id, type) {
   const field = document.getElementById(selectId(id, type));
   return field ? field.value : '';
-}
-
-function getSelectedColor(id, context = 'card') {
-  const picker = document.getElementById(colorPickerId(id, context));
-  return picker ? picker.dataset.selectedColor : COLOR_NAMES[0];
-}
-
-function selectColor(id, colorName, context = 'card') {
-  const picker = document.getElementById(colorPickerId(id, context));
-  const product = products.find(p => p.id === id);
-  if (!picker || !product) return;
-
-  picker.dataset.selectedColor = colorName;
-  $$('.swatch-option', picker).forEach(button => {
-    button.classList.toggle('active', button.dataset.color === colorName);
-  });
-
-  const image = document.getElementById(imageId(id, context));
-  if (image) {
-    image.classList.add('color-switching');
-    image.onload = () => image.classList.remove('color-switching');
-    image.onerror = () => image.classList.remove('color-switching');
-    image.src = getProductImage(product, colorName);
-  }
 }
 
 function scrollToShop() {
@@ -135,17 +93,16 @@ function scrollToShop() {
   document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
 }
 
-function addToCart(id, size, color) {
+function addToCart(id, size) {
   const product = products.find(p => p.id === id);
   if (!product) return openContact('NORÉA item');
 
   const selectedSize = size || getSelection(id, 'size') || product.sizes[0];
-  const selectedColor = color || getSelectedColor(id, 'card') || product.colors[0];
-  const key = `${id}|${selectedSize}|${selectedColor}`;
+  const key = `${id}|${selectedSize}`;
   const item = cart.find(i => i.key === key);
 
   if (item) item.qty += 1;
-  else cart.push({ key, id, qty: 1, size: selectedSize, color: selectedColor });
+  else cart.push({ key, id, qty: 1, size: selectedSize });
 
   saveCart();
   closeQuickView();
@@ -165,34 +122,14 @@ function changeQty(key, diff) {
   saveCart();
 }
 
-function renderOptionSelect(product, type) {
-  const values = type === 'size' ? product.sizes : product.colors;
-  const label = type === 'size' ? 'Size' : 'Color';
+function renderOptionSelect(product) {
   return `
     <label class="product-option">
-      <span>${label}</span>
-      <select id="${selectId(product.id, type)}">
-        ${values.map(value => `<option value="${value}">${value}</option>`).join('')}
+      <span>Size</span>
+      <select id="${selectId(product.id, 'size')}">
+        ${product.sizes.map(value => `<option value="${value}">${value}</option>`).join('')}
       </select>
     </label>
-  `;
-}
-
-function renderColorPicker(product, context = 'card', selectedColor = product.colors[0]) {
-  return `
-    <div class="color-picker" id="${colorPickerId(product.id, context)}" data-selected-color="${selectedColor}">
-      <span class="option-label">Color</span>
-      <div class="swatch-list" role="list" aria-label="Choose color">
-        ${product.colors.map(colorName => {
-          const color = getColorMeta(colorName);
-          return `
-            <button type="button" class="swatch-option ${colorName === selectedColor ? 'active' : ''}" data-color="${colorName}" onclick="selectColor('${product.id}', '${colorName}', '${context}')" aria-label="${colorName}">
-              <span class="swatch-dot" style="--swatch:${color.hex}"></span>
-              <span>${colorName}</span>
-            </button>`;
-        }).join('')}
-      </div>
-    </div>
   `;
 }
 
@@ -217,31 +154,27 @@ function renderProducts() {
     return;
   }
 
-  grid.innerHTML = filtered.map(p => {
-    const initialColor = p.colors[0];
-    return `
-      <article class="product-card reveal" data-product-id="${p.id}">
-        <div class="product-image-wrap">
-          <img id="${imageId(p.id, 'card')}" src="${getProductImage(p, initialColor)}" alt="${p.name}" loading="lazy" />
-          <span class="product-badge">${p.tag}</span>
-          <button class="quick-view" onclick="openQuickView('${p.id}')">Quick view</button>
+  grid.innerHTML = filtered.map(p => `
+    <article class="product-card reveal" data-product-id="${p.id}">
+      <div class="product-image-wrap">
+        <img id="${imageId(p.id, 'card')}" src="${getProductImage(p)}" alt="${p.name}" loading="lazy" />
+        <span class="product-badge">${p.tag}</span>
+        <button class="quick-view" onclick="openQuickView('${p.id}')">Quick view</button>
+      </div>
+      <div class="product-copy">
+        <div>
+          <p class="eyebrow">${p.category}</p>
+          <h3>${p.name}</h3>
         </div>
-        <div class="product-copy">
-          <div>
-            <p class="eyebrow">${p.category}</p>
-            <h3>${p.name}</h3>
-          </div>
-          <strong>${money(p.price)}</strong>
-        </div>
-        <p class="muted small">Sizes: ${optionText(p.sizes)}</p>
-        <div class="product-options single">
-          ${renderOptionSelect(p, 'size')}
-        </div>
-        ${renderColorPicker(p, 'card', initialColor)}
-        <button class="btn dark full" onclick="addToCart('${p.id}')">Add to bag</button>
-      </article>
-    `;
-  }).join('');
+        <strong>${money(p.price)}</strong>
+      </div>
+      <p class="muted small">Sizes: ${optionText(p.sizes)}</p>
+      <div class="product-options single">
+        ${renderOptionSelect(p)}
+      </div>
+      <button class="btn dark full" onclick="addToCart('${p.id}')">Add to bag</button>
+    </article>
+  `).join('');
   observeReveal();
 }
 
@@ -286,13 +219,12 @@ function renderCart() {
     const p = products.find(prod => prod.id === item.id);
     if (!p) return '';
     total += p.price * item.qty;
-    const colorMeta = getColorMeta(item.color);
     return `
       <div class="cart-row">
-        <img src="${getProductImage(p, item.color)}" alt="${p.name}" />
+        <img src="${getProductImage(p)}" alt="${p.name}" />
         <div>
           <strong>${p.name}</strong>
-          <p>${item.size} / <span class="inline-swatch" style="--swatch:${colorMeta.hex}"></span>${item.color}</p>
+          <p>Size: ${item.size}</p>
           <p>${money(p.price)}</p>
           <div class="qty">
             <button onclick="changeQty('${item.key}', -1)" aria-label="Decrease quantity">−</button>
@@ -312,13 +244,12 @@ function closeCart() { document.body.classList.remove('cart-open'); }
 function openQuickView(id) {
   const p = products.find(prod => prod.id === id);
   if (!p) return;
-  const selectedColor = getSelectedColor(id, 'card') || p.colors[0];
 
   $('#modalContent').innerHTML = `
     <button class="modal-back" onclick="closeQuickView()" type="button">← Back to shop</button>
     <button class="modal-close" onclick="closeQuickView()" aria-label="Close quick view">×</button>
     <div class="modal-grid">
-      <div class="modal-image-wrap"><img id="${imageId(p.id, 'modal')}" src="${getProductImage(p, selectedColor)}" alt="${p.name}" /></div>
+      <div class="modal-image-wrap"><img id="${imageId(p.id, 'modal')}" src="${getProductImage(p)}" alt="${p.name}" /></div>
       <div class="modal-copy">
         <p class="eyebrow">${p.category} • ${p.tag}</p>
         <h2>${p.name}</h2>
@@ -329,11 +260,10 @@ function openQuickView(id) {
             <select id="modal-size-${p.id}">${p.sizes.map(size => `<option value="${size}">${size}</option>`).join('')}</select>
           </label>
         </div>
-        ${renderColorPicker(p, 'modal', selectedColor)}
         <p class="muted">Worldwide delivery in 10–15 business days. Secure online checkout in USD.</p>
         <strong class="modal-price">${money(p.price)}</strong>
         <div class="modal-actions">
-          <button class="btn dark" onclick="addToCart('${p.id}', document.getElementById('modal-size-${p.id}').value, getSelectedColor('${p.id}', 'modal'))">Add to bag</button>
+          <button class="btn dark" onclick="addToCart('${p.id}', document.getElementById('modal-size-${p.id}').value)">Add to bag</button>
           <button class="btn light" onclick="closeQuickView()">Keep browsing</button>
         </div>
       </div>
@@ -344,7 +274,7 @@ function openQuickView(id) {
 function closeQuickView() { document.body.classList.remove('modal-open'); }
 
 function openContact(item = 'NORÉA order') {
-  const message = encodeURIComponent(`Hi NORÉA, I need help with: ${item}. Please help me confirm size, color and delivery.`);
+  const message = encodeURIComponent(`Hi NORÉA, I need help with: ${item}. Please help me confirm sizing and delivery.`);
   window.location.href = `https://wa.me/${ORDER_PHONE}?text=${message}`;
 }
 
