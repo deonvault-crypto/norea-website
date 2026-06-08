@@ -15,7 +15,9 @@
     ],
     "tag": "New",
     "image": "assets/images/norea-essentials-crew-socks-3-pack-main.webp",
-    "imagesByColor": {},
+    "imagesByColor": {
+      "Black": "assets/images/norea-essentials-crew-socks-3-pack-black.webp"
+    },
     "description": "The NORÉA Essentials Crew Socks 3-Pack is designed for everyday comfort, training, and clean lifestyle styling.\n\nMade with a soft ribbed stretch-knit feel, these premium unisex crew socks are perfect for both women and men. The set includes three timeless colors — Cream, White, and Black — with subtle NORÉA branding for a minimal luxury look.\n\nDesigned to pair effortlessly with sneakers, gym fits, activewear, loungewear, and everyday outfits.",
     "active": true
   },
