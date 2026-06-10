@@ -160,5 +160,23 @@
     "image": "assets/images/norea-sculpt-zip-romper-main.webp",
     "description": "The NORÉA Sculpt Zip Romper is designed for a sleek, confident and comfortable fit. Made with a soft ribbed stretch fabric, it shapes the body beautifully while allowing easy movement for gym, Pilates, yoga, errands or casual everyday wear. The front zip detail gives it a clean sporty look, while the short-sleeve design keeps it breathable and flattering.",
     "active": true
+  },
+  {
+    "id": "norea-contour-zip-romper",
+    "name": "NORÉA Contour Zip Romper",
+    "category": "Jumpsuit",
+    "price": 35,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-contour-zip-romper-main.webp",
+    "description": "The NORÉA Contour Zip Romper is made for a sculpted, sporty and confident fit. Designed with a sleek front zip, short sleeves and contrast contour lines, it shapes the body beautifully while giving a clean activewear look. The stretchy, comfortable fabric allows easy movement for gym, Pilates, yoga, running errands or everyday athleisure styling.",
+    "active": true
   }
 ]
