@@ -196,5 +196,23 @@
     "image": "assets/images/norea-sculpt-zip-legging-pink-set-main.webp",
     "description": "The NORÉA Sculpt Zip Legging Set in Pink is designed for a feminine, confident and polished activewear look. This two-piece set features a fitted long-sleeve zip jacket with thumbhole details and high-waisted leggings that sculpt and flatter the body. Made with soft stretch fabric, it moves comfortably with you while keeping a sleek, clean finish. Perfect for Pilates, yoga, gym sessions, travel days or stylish everyday wear.",
     "active": true
+  },
+  {
+    "id": "norea-sculpt-zip-legging-black-set",
+    "name": "NORÉA Sculpt Zip Legging Black Set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-sculpt-zip-legging-black-set-main.webp",
+    "description": "The NORÉA Sculpt Zip Legging Set in Black is made for a sleek, timeless and sculpted fit. This two-piece activewear set includes a fitted long-sleeve zip jacket with thumbhole details and high-waisted leggings designed to contour the body beautifully. The soft stretch fabric offers comfort, flexibility and support, making it perfect for gym workouts, Pilates, yoga, running errands or elevated athleisure styling.",
+    "active": true
   }
 ]
