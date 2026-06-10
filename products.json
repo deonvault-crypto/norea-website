@@ -178,5 +178,23 @@
     "image": "assets/images/norea-contour-zip-romper-main.webp",
     "description": "The NORÉA Contour Zip Romper is made for a sculpted, sporty and confident fit. Designed with a sleek front zip, short sleeves and contrast contour lines, it shapes the body beautifully while giving a clean activewear look. The stretchy, comfortable fabric allows easy movement for gym, Pilates, yoga, running errands or everyday athleisure styling.",
     "active": true
+  },
+  {
+    "id": "norea-sculpt-zip-legging-pink-set",
+    "name": "NORÉA Sculpt Zip Legging Pink Set",
+    "category": "Sets",
+    "price": 40,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-sculpt-zip-legging-pink-set-main.webp",
+    "description": "The NORÉA Sculpt Zip Legging Set in Pink is designed for a feminine, confident and polished activewear look. This two-piece set features a fitted long-sleeve zip jacket with thumbhole details and high-waisted leggings that sculpt and flatter the body. Made with soft stretch fabric, it moves comfortably with you while keeping a sleek, clean finish. Perfect for Pilates, yoga, gym sessions, travel days or stylish everyday wear.",
+    "active": true
   }
 ]
