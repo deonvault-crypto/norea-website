@@ -142,5 +142,23 @@
     "image": "assets/images/norea-pink-sculpt-shorts-set-main.webp",
     "description": "The ultimate blend of style and performance. Featuring a fitted ribbed zip jacket and matching sculpt shorts, this set offers a flattering silhouette, breathable fabric, and all-day comfort. Perfect for gym sessions, walks, and lifestyle wear.",
     "active": true
+  },
+  {
+    "id": "norea-sculpt-zip-romper",
+    "name": "NORÉA Sculpt Zip Romper",
+    "category": "Jumpsuit",
+    "price": 35,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-sculpt-zip-romper-main.webp",
+    "description": "The NORÉA Sculpt Zip Romper is designed for a sleek, confident and comfortable fit. Made with a soft ribbed stretch fabric, it shapes the body beautifully while allowing easy movement for gym, Pilates, yoga, errands or casual everyday wear. The front zip detail gives it a clean sporty look, while the short-sleeve design keeps it breathable and flattering.",
+    "active": true
   }
 ]
