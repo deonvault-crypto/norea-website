@@ -1,23 +1,5 @@
 [
   {
-    "id": "norea-sculpt-zip-set",
-    "name": "NORÉA Sculpt Zip Set",
-    "category": "Sets",
-    "price": 50,
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "tag": "New",
-    "image": "assets/images/norea-sculpt-zip-set-main.webp",
-    "description": "Sculpting long sleeve zip front one piece set with smooth compression fabric, contour piping, and an elevated off duty look. Designed for a flattering fit, everyday confidence, and studio to street styling.",
-    "active": true
-  },
-  {
     "id": "norea-curve-contour-set",
     "name": "NORÉA Curve Contour Set",
     "category": "Sets",
@@ -231,6 +213,24 @@
     "tag": "New",
     "image": "assets/images/norea-soft-sculpt-tee-legging-pink-set-main.webp",
     "description": "The NORÉA Soft Sculpt Tee Legging Set in Pink is designed for a feminine, clean and flattering activewear look. This two-piece set features a fitted short-sleeve top and high-waisted leggings that gently sculpt the body while keeping you comfortable. Made with soft stretch fabric, it moves easily with you and feels smooth against the skin. Perfect for Pilates, yoga, gym sessions, walking, travel or everyday athleisure styling.",
+    "active": true
+  },
+  {
+    "id": "norea-sculpt-zip-set",
+    "name": "NORÉA Sculpt Zip Set",
+    "category": "Sets",
+    "price": 30,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/norea-sculpt-zip-set-main.webp",
+    "description": "A sleek NORÉA activewear set designed for comfort, confidence, and everyday movement. Features a fitted long-sleeve zip top with pockets, high-waisted sculpting flare pants, soft stretch fabric, and a flattering body-contour fit.\n\nPerfect for gym, errands, travel, and elevated everyday wear.",
     "active": true
   }
 ]
