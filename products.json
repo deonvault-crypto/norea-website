@@ -232,5 +232,23 @@
     "image": "assets/images/norea-sculpt-zip-set-main.webp",
     "description": "A sleek NORÉA activewear set designed for comfort, confidence, and everyday movement. Features a fitted long-sleeve zip top with pockets, high-waisted sculpting flare pants, soft stretch fabric, and a flattering body-contour fit.\n\nPerfect for gym, errands, travel, and elevated everyday wear.",
     "active": true
+  },
+  {
+    "id": "2-piece-grey-outfit",
+    "name": "2 piece grey outfit",
+    "category": "Sets",
+    "price": 10,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/2-piece-grey-outfit-main.webp",
+    "description": "2pcs Women Casual Solid Color Fitted Top And Flared Pants Set, Spring/Autumn Fall Cloth For Women",
+    "active": true
   }
 ]
