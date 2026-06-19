@@ -324,24 +324,6 @@
     "active": true
   },
   {
-    "id": "jumpsuit",
-    "name": "Jumpsuit",
-    "category": "Sets",
-    "price": 20,
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "tag": "New",
-    "image": "assets/images/jumpsuit-main.webp",
-    "description": "StreetHx Women's Streetwear Solid Color Long Sleeve Half Zip Jumpsuit, Autumn",
-    "active": true
-  },
-  {
     "id": "strapless-set",
     "name": "Strapless set",
     "category": "Sets",
@@ -357,6 +339,24 @@
     "tag": "New",
     "image": "assets/images/strapless-set-main.webp",
     "description": "Women's Summer Solid Color Ruched Strapless Asymmetrical Hem Top And Flared Pants Two-Piece Set",
+    "active": true
+  },
+  {
+    "id": "jumpsuit",
+    "name": "Jumpsuit",
+    "category": "Sets",
+    "price": 20,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/jumpsuit-main.webp",
+    "description": "Women's Streetwear Solid Color Long Sleeve Half Zip Jumpsuit, Autumn",
     "active": true
   }
 ]
