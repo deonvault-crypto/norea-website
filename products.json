@@ -286,5 +286,23 @@
     "image": "assets/images/2-piece-red-outfit-main.webp",
     "description": "2pcs Women Casual Solid Color Fitted Top And Flared Pants Set, Spring/Autumn Fall Cloth For Women",
     "active": true
+  },
+  {
+    "id": "2-piece-casual-street-style",
+    "name": "2 piece casual street style",
+    "category": "Sets",
+    "price": 20,
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "tag": "New",
+    "image": "assets/images/2-piece-casual-street-style-main.webp",
+    "description": "Women's Casual Street Style Tracksuit, Printed Zip-Up Hoodie And Pants Set, Long Sleeve 2-Piece Outfit Spring Elegant",
+    "active": true
   }
 ]
