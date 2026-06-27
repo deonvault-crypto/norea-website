@@ -234,24 +234,6 @@
     "active": true
   },
   {
-    "id": "2-piece-blue-outfit",
-    "name": "2 piece blue outfit",
-    "category": "Sets",
-    "price": 10,
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "tag": "New",
-    "image": "assets/images/2-piece-blue-outfit-main.webp",
-    "description": "2pcs Women Casual Solid Color Fitted Top And Flared Pants Set, Spring/Autumn Fall Cloth For Women",
-    "active": true
-  },
-  {
     "id": "2-piece-red-outfit",
     "name": "2 piece red outfit",
     "category": "Sets",
