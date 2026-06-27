@@ -324,24 +324,6 @@
     "active": true
   },
   {
-    "id": "strapless-set",
-    "name": "Strapless set",
-    "category": "Sets",
-    "price": 10,
-    "sizes": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "tag": "New",
-    "image": "assets/images/strapless-set-main.webp",
-    "description": "Women's Summer Solid Color Ruched Strapless Asymmetrical Hem Top And Flared Pants Two-Piece Set",
-    "active": true
-  },
-  {
     "id": "jumpsuit",
     "name": "Jumpsuit",
     "category": "Sets",
