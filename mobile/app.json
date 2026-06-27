@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Noréa",
+    "slug": "norea-mobile",
+    "owner": "dawtonadeveloper",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "norea",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.norea.app",
+      "usesAppleSignIn": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Noréa may use your camera only if you choose to upload a profile or support image.",
+        "NSPhotoLibraryUsageDescription": "Noréa may access your photo library only if you choose to upload a profile or support image.",
+        "NSUserTrackingUsageDescription": "Noréa does not track you across apps or websites."
+      }
+    },
+    "android": {
+      "package": "com.norea.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FCE6EF"
+      },
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#FCE6EF"
+        }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "https://api.norea.fit/api",
+      "privacyUrl": "https://norea.fit/privacy",
+      "termsUrl": "https://norea.fit/terms",
+      "supportUrl": "https://norea.fit/support",
+      "websiteUrl": "https://norea.fit",
+      "eas": {
+        "projectId": "7a745a0e-51e9-4ff6-be0a-e19d0e4e584f"
+      }
+    }
+  }
+}
